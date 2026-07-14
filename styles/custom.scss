@@ -1,0 +1,16 @@
+/*-- scss:defaults --*/
+
+$font-family-sans-serif: "Arial", "Helvetica", sans-serif;
+$font-family-monospace: "Consolas", "Courier New", monospace;
+
+/*-- scss:rules --*/
+
+.callout-note {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.math.display {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}

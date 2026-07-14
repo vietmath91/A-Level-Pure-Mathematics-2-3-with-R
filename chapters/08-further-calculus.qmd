@@ -1,0 +1,1565 @@
+# Further calculus
+
+```{r}
+#| label: setup-further-calculus
+#| include: false
+
+library(ggplot2)
+
+book_theme <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(size = base_size - 1),
+      panel.grid.minor = element_blank()
+    )
+}
+```
+
+## Overview
+
+This chapter develops seven connected calculus ideas:
+
+1. the derivative of $\tan^{-1}x$;
+2. integration of expressions of the form $\dfrac{1}{x^2+a^2}$;
+3. integration of expressions of the form $\dfrac{kf'(x)}{f(x)}$;
+4. integration by substitution;
+5. the use of partial fractions in integration;
+6. integration by parts;
+7. further integration, including areas and volumes of revolution.
+
+The central aim is to recognise structure before choosing a method. In this chapter, the difficulty is often not the calculation itself, but deciding which method is appropriate.
+
+::: {.callout-note}
+The exercises are organised into tiers.
+
+**Bronze** develops fluency.  
+**Silver** develops simple application.  
+**Gold** develops exam-style reasoning.  
+The **STEP-style** section extends the chapter beyond routine A Level fluency.
+:::
+
+## 8.1 Derivative of $\tan^{-1}x$
+
+### Key mathematical ideas
+
+The derivative of the inverse tangent function is
+
+$$
+\dfrac{d}{dx}\left(\tan^{-1}x\right)
+=
+\dfrac{1}{1+x^2}.
+$$
+
+Using the chain rule,
+
+$$
+\dfrac{d}{dx}\left(\tan^{-1}(f(x))\right)
+=
+\dfrac{f'(x)}{1+[f(x)]^2}.
+$$
+
+In particular,
+
+$$
+\dfrac{d}{dx}\left(\tan^{-1}(ax+b)\right)
+=
+\dfrac{a}{1+(ax+b)^2}.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-arctan-and-derivative
+#| fig-cap: "The graph of y = tan^{-1}(x) and its derivative y = 1/(1 + x^2)."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-6, 6, length.out = 1000)
+)
+
+df$inverse_tangent <- atan(df$x)
+df$derivative <- 1 / (1 + df$x^2)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = inverse_tangent, linetype = "tan^{-1}(x)"), linewidth = 1.1) +
+  geom_line(aes(y = derivative, linetype = "1/(1 + x^2)"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  labs(
+    title = "Inverse tangent and its derivative",
+    subtitle = "The derivative is always positive and becomes small as |x| becomes large.",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+This graph is useful because it compares the function with its gradient function.
+
+The curve
+
+$$
+y=\tan^{-1}x
+$$
+
+is increasing, but it gradually flattens out. The derivative
+
+$$
+y=\dfrac{1}{1+x^2}
+$$
+
+explains this: the gradient is positive for all $x$, but tends to $0$ as $|x|$ becomes large.
+
+### Worked example
+
+Differentiate
+
+$$
+y=\tan^{-1}(3x-2).
+$$
+
+Let
+
+$$
+u=3x-2.
+$$
+
+Then
+
+$$
+\dfrac{du}{dx}=3.
+$$
+
+Using the chain rule,
+
+$$
+\dfrac{dy}{dx}
+=
+\dfrac{3}{1+(3x-2)^2}.
+$$
+
+### Short investigation
+
+Change the value of $a$ below and observe how the derivative changes.
+
+```{r}
+#| label: fig-arctan-ax-family
+#| fig-cap: "Comparing y = tan^{-1}(ax) with its derivative."
+#| fig-width: 6
+#| fig-height: 4
+
+a <- 3
+
+df <- data.frame(
+  x = seq(-3, 3, length.out = 800)
+)
+
+df$inverse_tangent <- atan(a * df$x)
+df$derivative <- a / (1 + (a * df$x)^2)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = inverse_tangent, linetype = "tan^{-1}(ax)"), linewidth = 1.1) +
+  geom_line(aes(y = derivative, linetype = "derivative"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  labs(
+    title = paste0("Function and derivative for y = tan^{-1}(", a, "x)"),
+    subtitle = "The derivative is largest at x = 0.",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Exercises 8.1
+
+#### Bronze
+
+1. Differentiate $y=\tan^{-1}x$.
+2. Differentiate $y=\tan^{-1}(3x)$.
+3. Differentiate $y=\tan^{-1}(2x-1)$.
+4. Differentiate $y=\tan^{-1}\left(\dfrac{x}{2}\right)$.
+5. Differentiate $y=\tan^{-1}(1-x)$.
+
+#### Silver
+
+1. Differentiate $y=x\tan^{-1}x$.
+2. Differentiate $y=\dfrac{\tan^{-1}x}{x}$, where $x\neq0$.
+3. Find the equation of the tangent to $y=\tan^{-1}(2x)$ at $x=0$.
+4. Find the gradient of $y=\tan^{-1}(x^2)$ at $x=1$.
+5. Show that, for $x>0$,
+   $$
+   \dfrac{d}{dx}\left(\tan^{-1}\left(\dfrac{1}{x}\right)\right)
+   =
+   -\dfrac{1}{1+x^2}.
+   $$
+
+#### Gold
+
+1. Find the equation of the tangent to $y=\tan^{-1}x$ at $x=1$.
+2. Show that $\tan^{-1}x+\tan^{-1}\left(\dfrac{1}{x}\right)$ is constant for $x>0$, and find the constant.
+3. Show that $y=x-\tan^{-1}x$ has a stationary point at $x=0$, but that this point is not a maximum or a minimum.
+4. Differentiate $y=\tan^{-1}(3x)-\tan^{-1}x$ and simplify your answer.
+5. Find the maximum value of
+   $$
+   y=\tan^{-1}x-\dfrac{x}{2}.
+   $$
+
+## 8.2 Integration of $\dfrac{1}{x^2+a^2}$
+
+### Key mathematical ideas
+
+Since
+
+$$
+\dfrac{d}{dx}\left(\tan^{-1}x\right)=\dfrac{1}{1+x^2},
+$$
+
+we have
+
+$$
+\int \dfrac{1}{1+x^2}\,dx=\tan^{-1}x+C.
+$$
+
+More generally,
+
+$$
+\int \dfrac{1}{x^2+a^2}\,dx
+=
+\dfrac{1}{a}\tan^{-1}\left(\dfrac{x}{a}\right)+C,
+\quad a>0.
+$$
+
+This result is particularly useful when a quadratic denominator cannot be factorised over the real numbers.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-arctan-integral-area
+#| fig-cap: "The area under y = 1/(1 + x^2) from x = 0 to x = 1."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0, 1, length.out = 600)
+)
+
+df$y <- 1 / (1 + df$x^2)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_area(alpha = 0.3) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Area under y = 1/(1 + x^2)",
+    subtitle = "The exact area from 0 to 1 is pi/4.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+The exact area is
+
+$$
+\int_0^1 \dfrac{1}{1+x^2}\,dx
+=
+\left[\tan^{-1}x\right]_0^1
+=
+\dfrac{\pi}{4}.
+$$
+
+### Worked example
+
+Find
+
+$$
+\int \dfrac{1}{x^2+9}\,dx.
+$$
+
+Since
+
+$$
+x^2+9=x^2+3^2,
+$$
+
+we use $a=3$.
+
+Therefore,
+
+$$
+\int \dfrac{1}{x^2+9}\,dx
+=
+\dfrac{1}{3}\tan^{-1}\left(\dfrac{x}{3}\right)+C.
+$$
+
+### Short investigation
+
+Change the value of $a$ and observe how the curve changes.
+
+```{r}
+#| label: fig-one-over-x2-plus-a2
+#| fig-cap: "Graphs of y = 1/(x^2 + a^2)."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- expand.grid(
+  x = seq(-6, 6, length.out = 800),
+  a_value = c(1, 2, 3)
+)
+
+df$curve_label <- paste0("a = ", df$a_value)
+df$y <- 1 / (df$x^2 + df$a_value^2)
+
+ggplot(df, aes(x = x, y = y, linetype = curve_label)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "The family y = 1/(x^2 + a^2)",
+    subtitle = "The parameter a changes both height and spread.",
+    x = "x",
+    y = "y",
+    linetype = "Parameter"
+  ) +
+  book_theme()
+```
+
+### Exercises 8.2
+
+#### Bronze
+
+1. Find $\int \dfrac{1}{1+x^2}\,dx$.
+2. Find $\int \dfrac{1}{x^2+4}\,dx$.
+3. Find $\int \dfrac{1}{x^2+9}\,dx$.
+4. Find $\int \dfrac{3}{x^2+9}\,dx$.
+5. Find $\int \dfrac{2}{4x^2+1}\,dx$.
+
+#### Silver
+
+1. Evaluate $\int_0^1 \dfrac{1}{1+x^2}\,dx$.
+2. Evaluate $\int_0^2 \dfrac{1}{x^2+4}\,dx$.
+3. Find $\int \dfrac{5}{x^2+25}\,dx$.
+4. Find $k$ if
+   $$
+   \int \dfrac{1}{x^2+k^2}\,dx
+   =
+   \dfrac{1}{3}\tan^{-1}\left(\dfrac{x}{3}\right)+C.
+   $$
+5. Evaluate $\int_0^{\sqrt3}\dfrac{1}{1+x^2}\,dx$.
+
+#### Gold
+
+1. Find $\int \dfrac{1}{4x^2+9}\,dx$.
+2. Evaluate $\int_0^1 \dfrac{6}{9+x^2}\,dx$.
+3. Solve
+   $$
+   \int_0^a \dfrac{1}{1+x^2}\,dx=\dfrac{\pi}{6},
+   \quad a>0.
+   $$
+4. Find $\int \dfrac{1}{x^2+2x+2}\,dx$.
+5. Show that
+   $$
+   \int_0^1 \dfrac{1}{4x^2+1}\,dx
+   =
+   \dfrac{1}{2}\tan^{-1}2.
+   $$
+
+## 8.3 Integration of $\dfrac{kf'(x)}{f(x)}$
+
+### Key mathematical ideas
+
+If $f(x)$ is differentiable, then
+
+$$
+\dfrac{d}{dx}\left(\ln|f(x)|\right)
+=
+\dfrac{f'(x)}{f(x)}.
+$$
+
+Therefore,
+
+$$
+\int \dfrac{f'(x)}{f(x)}\,dx
+=
+\ln|f(x)|+C.
+$$
+
+More generally,
+
+$$
+\int \dfrac{kf'(x)}{f(x)}\,dx
+=
+k\ln|f(x)|+C.
+$$
+
+The key is to recognise that the numerator is a constant multiple of the derivative of the denominator.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-log-structure-fprime-over-f
+#| fig-cap: "The structure f'(x)/f(x) for f(x) = x^2 + 1."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-3, 3, length.out = 800)
+)
+
+df$integrand <- 2 * df$x / (df$x^2 + 1)
+df$antiderivative <- log(df$x^2 + 1)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = integrand, linetype = "integrand"), linewidth = 1.1) +
+  geom_line(aes(y = antiderivative, linetype = "antiderivative"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Recognising f'(x)/f(x)",
+    subtitle = "The antiderivative is logarithmic.",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Find
+
+$$
+\int \dfrac{6x+4}{3x^2+4x+1}\,dx.
+$$
+
+Let
+
+$$
+f(x)=3x^2+4x+1.
+$$
+
+Then
+
+$$
+f'(x)=6x+4.
+$$
+
+Therefore,
+
+$$
+\int \dfrac{6x+4}{3x^2+4x+1}\,dx
+=
+\ln|3x^2+4x+1|+C.
+$$
+
+### Short investigation
+
+Use R to check by differentiating numerically.
+
+```{r}
+#| label: tbl-fprime-over-f-check
+#| echo: true
+
+x_values <- c(-2, -1, 0, 1, 2)
+
+f <- function(x) x^2 + 1
+f_prime <- function(x) 2 * x
+antiderivative <- function(x) log(x^2 + 1)
+
+numerical_derivative <- function(g, x, h = 1e-5) {
+  (g(x + h) - g(x - h)) / (2 * h)
+}
+
+data.frame(
+  x = x_values,
+  integrand = round(f_prime(x_values) / f(x_values), 6),
+  derivative_of_log = round(numerical_derivative(antiderivative, x_values), 6)
+)
+```
+
+### Exercises 8.3
+
+#### Bronze
+
+1. Find $\int \dfrac{2x}{x^2+1}\,dx$.
+2. Find $\int \dfrac{1}{x+1}\,dx$.
+3. Find $\int \dfrac{3x^2}{x^3+4}\,dx$.
+4. Find $\int \dfrac{2x+3}{x^2+3x+5}\,dx$.
+5. Find $\int \dfrac{5e^x}{e^x+2}\,dx$.
+
+#### Silver
+
+1. Evaluate $\int_0^1 \dfrac{2x}{x^2+1}\,dx$.
+2. Evaluate $\int_1^3 \dfrac{1}{x}\,dx$.
+3. Find $\int \dfrac{4x-1}{2x^2-x+5}\,dx$.
+4. Find $\int \dfrac{6x+6}{3x^2+6x+1}\,dx$.
+5. Find $k$ if
+   $$
+   \int \dfrac{kx}{x^2+1}\,dx=3\ln(x^2+1)+C.
+   $$
+
+#### Gold
+
+1. Evaluate $\int_0^1 \dfrac{2x+2}{x^2+2x+2}\,dx$.
+2. Find $\int \dfrac{x+1}{x^2+2x+5}\,dx$.
+3. Prove that
+   $$
+   \int \dfrac{f'(x)}{f(x)}\,dx=\ln|f(x)|+C.
+   $$
+4. Solve
+   $$
+   \int_0^a \dfrac{2x}{1+x^2}\,dx=\ln5,
+   \quad a>0.
+   $$
+5. Find $\int \dfrac{2x+3}{x^2+3x+3}\,dx$.
+
+## 8.4 Integration by substitution
+
+### Key mathematical ideas
+
+Integration by substitution is the reverse of the chain rule.
+
+If
+
+$$
+u=f(x),
+$$
+
+then
+
+$$
+\dfrac{du}{dx}=f'(x),
+$$
+
+so
+
+$$
+du=f'(x)\,dx.
+$$
+
+The purpose of substitution is to rewrite the whole integral in terms of a new variable.
+
+A typical pattern is
+
+$$
+\int f'(x)[f(x)]^n\,dx.
+$$
+
+Using
+
+$$
+u=f(x),
+$$
+
+this becomes
+
+$$
+\int u^n\,du.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-substitution-area
+#| fig-cap: "The shaded area represents an integral suited to substitution."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0, 1, length.out = 600)
+)
+
+df$y <- 2 * df$x * (1 + df$x^2)^2
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_area(alpha = 0.3) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "A substitution structure",
+    subtitle = "For 2x(1 + x^2)^2, use u = 1 + x^2.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Find
+
+$$
+\int 2x(1+x^2)^4\,dx.
+$$
+
+Let
+
+$$
+u=1+x^2.
+$$
+
+Then
+
+$$
+\dfrac{du}{dx}=2x,
+$$
+
+so
+
+$$
+du=2x\,dx.
+$$
+
+Therefore,
+
+$$
+\int 2x(1+x^2)^4\,dx
+=
+\int u^4\,du.
+$$
+
+Hence,
+
+$$
+\int u^4\,du=\dfrac{u^5}{5}+C.
+$$
+
+Substituting back gives
+
+$$
+\int 2x(1+x^2)^4\,dx
+=
+\dfrac{(1+x^2)^5}{5}+C.
+$$
+
+### Short investigation
+
+Compare the exact area with a numerical approximation.
+
+```{r}
+#| label: tbl-substitution-area-check
+#| echo: true
+
+exact_area <- ((1 + 1^2)^3 - (1 + 0^2)^3) / 3
+numerical_area <- integrate(function(x) 2 * x * (1 + x^2)^2, lower = 0, upper = 1)$value
+
+data.frame(
+  method = c("exact", "R numerical integration"),
+  area = c(exact_area, numerical_area)
+)
+```
+
+### Exercises 8.4
+
+#### Bronze
+
+1. Find $\int 2x(x^2+1)^3\,dx$.
+2. Find $\int 3(3x+1)^4\,dx$.
+3. Find $\int x\sqrt{x^2+4}\,dx$.
+4. Find $\int e^{2x+1}\,dx$.
+5. Find $\int \cos5x\,dx$.
+
+#### Silver
+
+1. Evaluate $\int_0^1 2x(x^2+1)^2\,dx$.
+2. Evaluate $\int_0^\pi \sin x\cos^2x\,dx$.
+3. Find $\int \dfrac{x}{x^2+1}\,dx$.
+4. Find $\int \dfrac{e^x}{1+e^x}\,dx$.
+5. Evaluate $\int_0^1 \dfrac{x}{(1+x^2)^2}\,dx$.
+
+#### Gold
+
+1. Evaluate $\int_0^1 6x(1+x^2)^2\,dx$.
+2. Evaluate $\int_0^{\dfrac{\pi}{2}}\sin x\sqrt{\cos x}\,dx$.
+3. Find integers $a$ and $b$ such that
+   $$
+   \dfrac{d}{dx}\left((1+x^2)^5\right)=ax(1+x^2)^b.
+   $$
+4. Find $\int \dfrac{x^3}{1+x^2}\,dx$.
+5. Show that, for $a>0$,
+   $$
+   \int_0^a \dfrac{2x}{(1+x^2)^2}\,dx
+   =
+   \dfrac{a^2}{1+a^2}.
+   $$
+
+## 8.5 The use of partial fractions in integration
+
+### Key mathematical ideas
+
+Partial fractions are useful in integration because they split a complicated rational function into simpler terms.
+
+For example,
+
+$$
+\dfrac{1}{x(x+1)}
+=
+\dfrac{1}{x}-\dfrac{1}{x+1}.
+$$
+
+Therefore,
+
+$$
+\int \dfrac{1}{x(x+1)}\,dx
+=
+\ln|x|-\ln|x+1|+C.
+$$
+
+::: {.callout-warning}
+Before using partial fractions, check whether the algebraic fraction is proper. If the degree of the numerator is greater than or equal to the degree of the denominator, do long division first.
+:::
+
+### Visualisation using R
+
+```{r}
+#| label: fig-partial-fractions-integrand
+#| fig-cap: "A rational function split into partial fractions."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0.2, 5, length.out = 800)
+)
+
+df$original <- 1 / (df$x * (df$x + 1))
+df$partial_fraction <- 1 / df$x - 1 / (df$x + 1)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = original, linetype = "original"), linewidth = 1.1) +
+  geom_line(aes(y = partial_fraction, linetype = "partial fractions"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Partial fractions before integration",
+    subtitle = "The two expressions are identical on their common domain.",
+    x = "x",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Find
+
+$$
+\int \dfrac{3x+5}{(x+1)(x+2)}\,dx.
+$$
+
+First write
+
+$$
+\dfrac{3x+5}{(x+1)(x+2)}
+=
+\dfrac{A}{x+1}+\dfrac{B}{x+2}.
+$$
+
+Multiplying throughout by $(x+1)(x+2)$ gives
+
+$$
+3x+5=A(x+2)+B(x+1).
+$$
+
+So
+
+$$
+3x+5=(A+B)x+(2A+B).
+$$
+
+Equating coefficients gives
+
+$$
+A+B=3
+$$
+
+and
+
+$$
+2A+B=5.
+$$
+
+Solving gives
+
+$$
+A=2,
+\quad
+B=1.
+$$
+
+Therefore,
+
+$$
+\int \dfrac{3x+5}{(x+1)(x+2)}\,dx
+=
+\int \left(\dfrac{2}{x+1}+\dfrac{1}{x+2}\right)\,dx.
+$$
+
+Hence,
+
+$$
+\int \dfrac{3x+5}{(x+1)(x+2)}\,dx
+=
+2\ln|x+1|+\ln|x+2|+C.
+$$
+
+### Short investigation
+
+Use R to check a definite integral after partial fractions.
+
+```{r}
+#| label: tbl-partial-fraction-integration-check
+#| echo: true
+
+exact_value <- log(4 / 3)
+numerical_value <- integrate(function(x) 1 / ((x + 1) * (x + 2)), lower = 0, upper = 1)$value
+
+data.frame(
+  method = c("exact", "R numerical integration"),
+  value = c(exact_value, numerical_value)
+)
+```
+
+### Exercises 8.5
+
+#### Bronze
+
+1. Find $\int \dfrac{1}{x(x+1)}\,dx$.
+2. Find $\int \dfrac{1}{(x-1)(x+2)}\,dx$.
+3. Find $\int \dfrac{2x+3}{(x+1)(x+2)}\,dx$.
+4. Find $\int \dfrac{1}{(x+1)^2}\,dx$.
+5. Find $\int \dfrac{5x+1}{(x-1)(x+2)}\,dx$.
+
+#### Silver
+
+1. Find $\int \dfrac{3x+5}{(x+1)(x+2)}\,dx$.
+2. Find $\int \dfrac{1}{x^2-1}\,dx$.
+3. Evaluate $\int_0^1 \dfrac{1}{(x+1)(x+2)}\,dx$.
+4. Find $\int \dfrac{x+3}{x^2+3x+2}\,dx$.
+5. Find $\int \dfrac{1}{x(x+1)^2}\,dx$.
+
+#### Gold
+
+1. Find $\int \dfrac{x^2+1}{x(x+1)}\,dx$.
+2. Find $\int \dfrac{1}{x(x+1)(x+2)}\,dx$.
+3. Use partial fractions to prove that
+   $$
+   \sum_{r=1}^{n}\dfrac{1}{r(r+1)}=\dfrac{n}{n+1}.
+   $$
+4. Evaluate $\int_1^2 \dfrac{1}{x(x+1)}\,dx$.
+5. Find $k$ if
+   $$
+   \int \dfrac{kx+8}{(x+1)(x+2)}\,dx
+   =
+   3\ln|x+1|+2\ln|x+2|+C.
+   $$
+
+## 8.6 Integration by parts
+
+### Key mathematical ideas
+
+Integration by parts is the reverse of the product rule.
+
+The product rule says
+
+$$
+\dfrac{d}{dx}(uv)=u\dfrac{dv}{dx}+v\dfrac{du}{dx}.
+$$
+
+Rearranging and integrating gives
+
+$$
+\int u\dfrac{dv}{dx}\,dx
+=
+uv-\int v\dfrac{du}{dx}\,dx.
+$$
+
+This is usually written as
+
+$$
+\int u\,dv=uv-\int v\,du.
+$$
+
+### Why display integration by parts?
+
+A graph does not show the algebraic mechanism of integration by parts as directly as it shows area or volume. Its value is different: it shows the integral as an area under a product curve, while the method rewrites that area in terms of a boundary term minus a simpler area.
+
+So integration by parts is worth displaying when we want students to see that an apparently difficult product integral such as
+
+$$
+\int xe^x\,dx
+$$
+
+still represents an area, even though the exact calculation needs an algebraic transformation.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-integration-by-parts-area
+#| fig-cap: "The shaded area represents the integral of x e^x from 0 to 1."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0, 1, length.out = 600)
+)
+
+df$y <- df$x * exp(df$x)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_area(alpha = 0.3) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Area under y = x e^x",
+    subtitle = "Integration by parts gives the exact area from 0 to 1 as 1.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Find
+
+$$
+\int xe^x\,dx.
+$$
+
+Choose
+
+$$
+u=x,
+\quad
+\dfrac{dv}{dx}=e^x.
+$$
+
+Then
+
+$$
+\dfrac{du}{dx}=1,
+\quad
+v=e^x.
+$$
+
+Using integration by parts,
+
+$$
+\int xe^x\,dx
+=
+xe^x-\int e^x\,dx.
+$$
+
+Therefore,
+
+$$
+\int xe^x\,dx
+=
+xe^x-e^x+C.
+$$
+
+So
+
+$$
+\int xe^x\,dx
+=
+(x-1)e^x+C.
+$$
+
+### Short investigation
+
+Compare exact and numerical values for an integration-by-parts problem.
+
+```{r}
+#| label: tbl-parts-area-check
+#| echo: true
+
+exact_area <- 1
+numerical_area <- integrate(function(x) x * exp(x), lower = 0, upper = 1)$value
+
+data.frame(
+  method = c("exact", "R numerical integration"),
+  area = c(exact_area, numerical_area)
+)
+```
+
+### Exercises 8.6
+
+#### Bronze
+
+1. Find $\int xe^x\,dx$.
+2. Find $\int x\cos x\,dx$.
+3. Find $\int x\sin x\,dx$.
+4. Find $\int \ln x\,dx$, where $x>0$.
+5. Find $\int x\ln x\,dx$, where $x>0$.
+
+#### Silver
+
+1. Evaluate $\int_0^1 xe^x\,dx$.
+2. Evaluate $\int_0^{\dfrac{\pi}{2}}x\cos x\,dx$.
+3. Evaluate $\int_0^\pi x\sin x\,dx$.
+4. Evaluate $\int_1^e \ln x\,dx$.
+5. Evaluate $\int_0^1 xe^{2x}\,dx$.
+
+#### Gold
+
+1. Find $\int x^2e^x\,dx$.
+2. Evaluate $\int_0^1 x^2e^x\,dx$.
+3. Find $\int x^2\ln x\,dx$, where $x>0$.
+4. Evaluate $\int_0^\pi x\sin2x\,dx$.
+5. Prove the integration by parts formula from the product rule.
+
+## 8.7 Further integration
+
+### Key mathematical ideas
+
+Further integration is about choosing from several techniques:
+
+- direct reverse differentiation;
+- substitution;
+- partial fractions;
+- integration by parts;
+- trigonometric identities;
+- area formulae;
+- volume of revolution formulae.
+
+For area under a curve above the $x$-axis,
+
+$$
+A=\int_a^b y\,dx.
+$$
+
+For volume generated by rotating the region under $y=f(x)$ about the $x$-axis,
+
+$$
+V=\pi\int_a^b y^2\,dx.
+$$
+
+### Visualisation using R: shaded area
+
+```{r}
+#| label: fig-area-x-sin-x
+#| fig-cap: "The shaded area under y = x sin(x) from 0 to pi."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0, pi, length.out = 800)
+)
+
+df$y <- df$x * sin(df$x)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_area(alpha = 0.3) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Area under y = x sin(x)",
+    subtitle = "The exact area from 0 to pi is pi.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example: area
+
+Find the exact area under
+
+$$
+y=x\sin x
+$$
+
+from $x=0$ to $x=\pi$.
+
+The area is
+
+$$
+A=\int_0^\pi x\sin x\,dx.
+$$
+
+Using integration by parts with
+
+$$
+u=x,
+\quad
+\dfrac{dv}{dx}=\sin x,
+$$
+
+we get
+
+$$
+\dfrac{du}{dx}=1,
+\quad
+v=-\cos x.
+$$
+
+Therefore,
+
+$$
+\int x\sin x\,dx
+=
+-x\cos x+\int \cos x\,dx.
+$$
+
+So
+
+$$
+\int x\sin x\,dx
+=
+-x\cos x+\sin x+C.
+$$
+
+Hence,
+
+$$
+A=
+\left[-x\cos x+\sin x\right]_0^\pi.
+$$
+
+Therefore,
+
+$$
+A=\pi.
+$$
+
+### Visualisation using R: volume of revolution
+
+```{r}
+#| label: fig-volume-region-sqrt-x
+#| fig-cap: "The shaded region under y = sqrt(x) from x = 0 to x = 4."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0, 4, length.out = 800)
+)
+
+df$y <- sqrt(df$x)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_area(alpha = 0.3) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Region for a volume of revolution",
+    subtitle = "Rotating this region about the x-axis gives V = pi int_0^4 x dx.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example: volume of revolution
+
+The region under
+
+$$
+y=\sqrt{x}
+$$
+
+from $x=0$ to $x=4$ is rotated completely about the $x$-axis. Find the exact volume.
+
+Using
+
+$$
+V=\pi\int_a^b y^2\,dx,
+$$
+
+we get
+
+$$
+V=\pi\int_0^4 (\sqrt{x})^2\,dx.
+$$
+
+So
+
+$$
+V=\pi\int_0^4 x\,dx.
+$$
+
+Therefore,
+
+$$
+V=\pi\left[\dfrac{x^2}{2}\right]_0^4.
+$$
+
+Hence,
+
+$$
+V=8\pi.
+$$
+
+### Exercises 8.7
+
+#### Bronze
+
+1. Find the area under $y=x$ from $x=0$ to $x=3$.
+2. Find the area under $y=x^2$ from $x=0$ to $x=2$.
+3. Find the volume formed when the region under $y=x$ from $x=0$ to $x=2$ is rotated about the $x$-axis.
+4. Find the volume formed when the region under $y=\sqrt{x}$ from $x=0$ to $x=4$ is rotated about the $x$-axis.
+5. Find the area under $y=e^{-x}$ from $x=0$ to $x=\ln2$.
+
+#### Silver
+
+1. Find the area under $y=x\ln x$ from $x=1$ to $x=e$.
+2. Find the area under $y=x\sin x$ from $x=0$ to $x=\pi$.
+3. Find the volume formed when the region under $y=e^{-x}$ from $x=0$ to $x=\ln2$ is rotated about the $x$-axis.
+4. Find the area between $y=x$ and $y=x^2$ from $x=0$ to $x=1$.
+5. Find the volume formed when the region under $y=x^2$ from $x=0$ to $x=1$ is rotated about the $x$-axis.
+
+#### Gold
+
+1. Find the area between $y=\sin x$ and $y=\cos x$ from $x=0$ to $x=\dfrac{\pi}{4}$.
+2. Find the volume formed when the region under $y=\sqrt{1+x}$ from $x=0$ to $x=3$ is rotated about the $x$-axis.
+3. Find the area under $y=\ln x$ from $x=1$ to $x=e^2$.
+4. Find the area under $y=\dfrac{1}{1+x^2}$ from $x=0$ to $x=1$.
+5. Find the volume formed when the region under $y=\dfrac{1}{\sqrt{1+x}}$ from $x=0$ to $x=3$ is rotated about the $x$-axis.
+
+## STEP-style extension questions
+
+These questions are designed to require proof, structure or exact reasoning.
+
+### STEP-style Question 1
+
+Use implicit differentiation to prove that
+
+$$
+\dfrac{d}{dx}\left(\tan^{-1}x\right)=\dfrac{1}{1+x^2}.
+$$
+
+### STEP-style Question 2
+
+Prove that
+
+$$
+\int_0^1 \dfrac{1}{1+x^2}\,dx=\dfrac{\pi}{4}.
+$$
+
+Then interpret this result as an area.
+
+### STEP-style Question 3
+
+Use integration by parts to prove that
+
+$$
+\int_0^1 xe^x\,dx=1.
+$$
+
+Explain why this integral is not a direct reverse-chain-rule integral.
+
+### STEP-style Question 4
+
+Let
+
+$$
+I_n=\int_0^\pi x\sin(nx)\,dx,
+$$
+
+where $n$ is a positive integer.
+
+Find $I_n$ in terms of $n$.
+
+### STEP-style Question 5
+
+The region under
+
+$$
+y=\sqrt{x}
+$$
+
+from $x=0$ to $x=a$ is rotated completely about the $x$-axis.
+
+Show that the volume is
+
+$$
+V=\dfrac{\pi a^2}{2}.
+$$
+
+Hence find $a$ if the volume is $8\pi$.
+
+## Reflection questions
+
+1. Why is the derivative of $\tan^{-1}x$ connected to $\dfrac{1}{1+x^2}$?
+2. Why does $\int \dfrac{1}{x^2+a^2}\,dx$ produce an inverse tangent?
+3. How can you recognise the structure $\dfrac{f'(x)}{f(x)}$?
+4. Why must every part of an integral be rewritten when using substitution?
+5. Why are partial fractions useful before integrating rational functions?
+6. Why is integration by parts described as the reverse of the product rule?
+7. Why is graphing integration by parts less direct than graphing area or volume?
+8. How does the formula $V=\pi\int y^2\,dx$ connect a two-dimensional region to a three-dimensional solid?
+9. What can R show clearly about areas and volumes that algebra alone may hide?
+10. What can exact calculus prove that numerical graphing can only suggest?
+
+## Answers
+
+### Answers to Exercises 8.1
+
+#### Bronze
+
+1. $\dfrac{dy}{dx}=\dfrac{1}{1+x^2}$.
+2. $\dfrac{dy}{dx}=\dfrac{3}{1+9x^2}$.
+3. $\dfrac{dy}{dx}=\dfrac{2}{1+(2x-1)^2}$.
+4. $\dfrac{dy}{dx}=\dfrac{2}{x^2+4}$.
+5. $\dfrac{dy}{dx}=-\dfrac{1}{1+(1-x)^2}$.
+
+#### Silver
+
+1. $\dfrac{dy}{dx}=\tan^{-1}x+\dfrac{x}{1+x^2}$.
+2. $\dfrac{dy}{dx}=\dfrac{\dfrac{x}{1+x^2}-\tan^{-1}x}{x^2}$.
+3. The tangent is $y=2x$.
+4. The gradient is $1$.
+5. For $x>0$,
+   $$
+   \dfrac{d}{dx}\left(\tan^{-1}\left(\dfrac{1}{x}\right)\right)
+   =
+   \dfrac{-\dfrac{1}{x^2}}{1+\dfrac{1}{x^2}}
+   =
+   -\dfrac{1}{1+x^2}.
+   $$
+
+#### Gold
+
+1. The tangent is
+   $$
+   y-\dfrac{\pi}{4}=\dfrac{1}{2}(x-1).
+   $$
+2. The derivative is zero for $x>0$, so the expression is constant. Substituting $x=1$ gives the constant $\dfrac{\pi}{2}$.
+3. $\dfrac{dy}{dx}=\dfrac{x^2}{1+x^2}$, so the only stationary point is $x=0$. The derivative is non-negative on both sides, so it is not a maximum or minimum.
+4. $\dfrac{dy}{dx}=\dfrac{2(1-3x^2)}{(1+9x^2)(1+x^2)}$.
+5. The maximum occurs at $x=1$, and its value is $\dfrac{\pi}{4}-\dfrac{1}{2}$.
+
+### Answers to Exercises 8.2
+
+#### Bronze
+
+1. $\tan^{-1}x+C$.
+2. $\dfrac{1}{2}\tan^{-1}\left(\dfrac{x}{2}\right)+C$.
+3. $\dfrac{1}{3}\tan^{-1}\left(\dfrac{x}{3}\right)+C$.
+4. $\tan^{-1}\left(\dfrac{x}{3}\right)+C$.
+5. $\tan^{-1}(2x)+C$.
+
+#### Silver
+
+1. $\dfrac{\pi}{4}$.
+2. $\dfrac{\pi}{8}$.
+3. $\tan^{-1}\left(\dfrac{x}{5}\right)+C$.
+4. $k=3$.
+5. $\dfrac{\pi}{3}$.
+
+#### Gold
+
+1. $\dfrac{1}{6}\tan^{-1}\left(\dfrac{2x}{3}\right)+C$.
+2. $2\tan^{-1}\left(\dfrac{1}{3}\right)$.
+3. $a=\dfrac{1}{\sqrt3}$.
+4. $\tan^{-1}(x+1)+C$.
+5. Since
+   $$
+   \int \dfrac{1}{4x^2+1}\,dx=\dfrac{1}{2}\tan^{-1}(2x)+C,
+   $$
+   the result follows by substituting the limits.
+
+### Answers to Exercises 8.3
+
+#### Bronze
+
+1. $\ln(x^2+1)+C$.
+2. $\ln|x+1|+C$.
+3. $\ln|x^3+4|+C$.
+4. $\ln|x^2+3x+5|+C$.
+5. $5\ln(e^x+2)+C$.
+
+#### Silver
+
+1. $\ln2$.
+2. $\ln3$.
+3. $\ln|2x^2-x+5|+C$.
+4. $\ln|3x^2+6x+1|+C$.
+5. $k=6$.
+
+#### Gold
+
+1. $\ln\left(\dfrac{5}{2}\right)$.
+2. $\dfrac{1}{2}\ln(x^2+2x+5)+C$.
+3. This follows by differentiating $\ln|f(x)|$ using the chain rule.
+4. $a=2$.
+5. $\ln|x^2+3x+3|+C$.
+
+### Answers to Exercises 8.4
+
+#### Bronze
+
+1. $\dfrac{(x^2+1)^4}{4}+C$.
+2. $\dfrac{(3x+1)^5}{5}+C$.
+3. $\dfrac{1}{3}(x^2+4)^{\dfrac{3}{2}}+C$.
+4. $\dfrac{1}{2}e^{2x+1}+C$.
+5. $\dfrac{1}{5}\sin5x+C$.
+
+#### Silver
+
+1. $\dfrac{7}{3}$.
+2. $\dfrac{2}{3}$.
+3. $\dfrac{1}{2}\ln(x^2+1)+C$.
+4. $\ln(1+e^x)+C$.
+5. $\dfrac{1}{4}$.
+
+#### Gold
+
+1. $7$.
+2. $\dfrac{2}{3}$.
+3. $a=10$ and $b=4$.
+4. $\dfrac{x^2}{2}-\dfrac{1}{2}\ln(1+x^2)+C$.
+5. Since
+   $$
+   \int \dfrac{2x}{(1+x^2)^2}\,dx=-\dfrac{1}{1+x^2}+C,
+   $$
+   the definite integral is $1-\dfrac{1}{1+a^2}=\dfrac{a^2}{1+a^2}$.
+
+### Answers to Exercises 8.5
+
+#### Bronze
+
+1. $\ln|x|-\ln|x+1|+C$.
+2. $\dfrac{1}{3}\ln|x-1|-\dfrac{1}{3}\ln|x+2|+C$.
+3. $\ln|x+1|+\ln|x+2|+C$.
+4. $-\dfrac{1}{x+1}+C$.
+5. $2\ln|x-1|+3\ln|x+2|+C$.
+
+#### Silver
+
+1. $2\ln|x+1|+\ln|x+2|+C$.
+2. $\dfrac{1}{2}\ln|x-1|-\dfrac{1}{2}\ln|x+1|+C$.
+3. $\ln\left(\dfrac{4}{3}\right)$.
+4. $2\ln|x+1|-\ln|x+2|+C$.
+5. $\ln|x|-\ln|x+1|+\dfrac{1}{x+1}+C$.
+
+#### Gold
+
+1. $x+\ln|x|-2\ln|x+1|+C$.
+2. $\dfrac{1}{2}\ln|x|-\ln|x+1|+\dfrac{1}{2}\ln|x+2|+C$.
+3. Since $\dfrac{1}{r(r+1)}=\dfrac{1}{r}-\dfrac{1}{r+1}$, the sum telescopes to $1-\dfrac{1}{n+1}=\dfrac{n}{n+1}$.
+4. $\ln\left(\dfrac{4}{3}\right)$.
+5. $k=5$.
+
+### Answers to Exercises 8.6
+
+#### Bronze
+
+1. $(x-1)e^x+C$.
+2. $x\sin x+\cos x+C$.
+3. $-x\cos x+\sin x+C$.
+4. $x\ln x-x+C$.
+5. $\dfrac{x^2}{2}\ln x-\dfrac{x^2}{4}+C$.
+
+#### Silver
+
+1. $1$.
+2. $\dfrac{\pi}{2}-1$.
+3. $\pi$.
+4. $1$.
+5. $\dfrac{e^2+1}{4}$.
+
+#### Gold
+
+1. $e^x(x^2-2x+2)+C$.
+2. $e-2$.
+3. $\dfrac{x^3}{3}\ln x-\dfrac{x^3}{9}+C$.
+4. $-\dfrac{\pi}{2}$.
+5. Starting from $\dfrac{d}{dx}(uv)=u\dfrac{dv}{dx}+v\dfrac{du}{dx}$ and integrating both sides gives the integration by parts formula.
+
+### Answers to Exercises 8.7
+
+#### Bronze
+
+1. $\dfrac{9}{2}$.
+2. $\dfrac{8}{3}$.
+3. $\dfrac{8\pi}{3}$.
+4. $8\pi$.
+5. $\dfrac{1}{2}$.
+
+#### Silver
+
+1. $\dfrac{e^2+1}{4}$.
+2. $\pi$.
+3. $\dfrac{3\pi}{8}$.
+4. $\dfrac{1}{6}$.
+5. $\dfrac{\pi}{5}$.
+
+#### Gold
+
+1. $\sqrt2-1$.
+2. $\dfrac{15\pi}{2}$.
+3. $e^2+1$.
+4. $\dfrac{\pi}{4}$.
+5. $\pi\ln4$.
+
+### Answers to STEP-style extension questions
+
+1. Let $y=\tan^{-1}x$. Then $\tan y=x$. Differentiating implicitly gives
+   $$
+   \sec^2y\dfrac{dy}{dx}=1.
+   $$
+   Hence
+   $$
+   \dfrac{dy}{dx}=\dfrac{1}{\sec^2y}.
+   $$
+   Since $\sec^2y=1+\tan^2y=1+x^2$, we get
+   $$
+   \dfrac{dy}{dx}=\dfrac{1}{1+x^2}.
+   $$
+
+2. Since
+   $$
+   \int \dfrac{1}{1+x^2}\,dx=\tan^{-1}x+C,
+   $$
+   we have
+   $$
+   \int_0^1 \dfrac{1}{1+x^2}\,dx
+   =
+   \left[\tan^{-1}x\right]_0^1
+   =
+   \dfrac{\pi}{4}.
+   $$
+   This is the exact area under $y=\dfrac{1}{1+x^2}$ from $0$ to $1$.
+
+3. Using integration by parts,
+   $$
+   \int_0^1 xe^x\,dx
+   =
+   \left[xe^x\right]_0^1-\int_0^1 e^x\,dx
+   =
+   e-(e-1)=1.
+   $$
+   It is not a direct reverse-chain-rule integral because $x$ is not a constant multiple of the derivative of $e^x$.
+
+4. Using integration by parts,
+   $$
+   I_n=\int_0^\pi x\sin(nx)\,dx
+   =
+   \left[-\dfrac{x\cos(nx)}{n}\right]_0^\pi
+   +
+   \dfrac{1}{n}\int_0^\pi \cos(nx)\,dx.
+   $$
+   The second integral is zero. Therefore,
+   $$
+   I_n=-\dfrac{\pi\cos(n\pi)}{n}
+   =
+   \dfrac{(-1)^{n+1}\pi}{n}.
+   $$
+
+5. The volume is
+   $$
+   V=\pi\int_0^a (\sqrt{x})^2\,dx
+   =
+   \pi\int_0^a x\,dx
+   =
+   \dfrac{\pi a^2}{2}.
+   $$
+   If $V=8\pi$, then
+   $$
+   \dfrac{\pi a^2}{2}=8\pi.
+   $$
+   Hence $a^2=16$, and since $a>0$, $a=4$.

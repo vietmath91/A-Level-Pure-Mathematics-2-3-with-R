@@ -1,0 +1,1425 @@
+# Numerical solutions of equations
+
+```{r}
+#| label: setup-numerical-methods
+#| include: false
+
+library(ggplot2)
+
+book_theme <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(size = base_size - 1),
+      panel.grid.minor = element_blank()
+    )
+}
+
+fixed_point_steps <- function(g, x_start, n_steps) {
+  values <- numeric(n_steps + 1)
+  values[1] <- x_start
+  
+  for (i in seq_len(n_steps)) {
+    values[i + 1] <- g(values[i])
+  }
+  
+  data.frame(
+    iteration = 0:n_steps,
+    x_value = values
+  )
+}
+
+make_cobweb <- function(g, x_start, n_steps) {
+  segments <- data.frame(
+    step = integer(),
+    x = numeric(),
+    y = numeric(),
+    xend = numeric(),
+    yend = numeric()
+  )
+  
+  x_current <- x_start
+  
+  for (i in seq_len(n_steps)) {
+    y_next <- g(x_current)
+    
+    vertical_segment <- data.frame(
+      step = i,
+      x = x_current,
+      y = x_current,
+      xend = x_current,
+      yend = y_next
+    )
+    
+    horizontal_segment <- data.frame(
+      step = i,
+      x = x_current,
+      y = y_next,
+      xend = y_next,
+      yend = y_next
+    )
+    
+    segments <- rbind(segments, vertical_segment, horizontal_segment)
+    x_current <- y_next
+  }
+  
+  segments
+}
+```
+
+## Overview
+
+This chapter develops three connected numerical methods ideas:
+
+1. finding a starting point for a root;
+2. improving a solution using iteration;
+3. using iterative processes to solve problems involving other areas of mathematics.
+
+The central aim is to understand how equations can be solved approximately when exact algebraic methods are difficult or unavailable.
+
+::: {.callout-note}
+The exercises are organised into tiers.
+
+**Bronze** develops fluency.  
+**Silver** develops simple application.  
+**Gold** develops exam-style reasoning.  
+The **STEP-style** section extends the chapter beyond routine A Level fluency.
+:::
+
+## 6.1 Finding a starting point
+
+### Key mathematical ideas
+
+A root of the equation
+
+$$
+f(x)=0
+$$
+
+is a value of $x$ where the graph of $y=f(x)$ crosses or touches the $x$-axis.
+
+A common way to locate a starting interval is the **change of sign test**.
+
+If $f$ is continuous on $[a,b]$ and
+
+$$
+f(a)f(b)<0,
+$$
+
+then there is at least one root of
+
+$$
+f(x)=0
+$$
+
+between $a$ and $b$.
+
+This works because a continuous graph cannot move from one side of the $x$-axis to the other without crossing it.
+
+However, the test must be used carefully:
+
+- a change of sign guarantees at least one root only when the function is continuous;
+- no change of sign does not always mean there is no root;
+- a root may touch the axis without crossing it.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-sign-change-root
+#| fig-cap: "The root of f(x) = x^3 - x - 4 lies between 1 and 2."
+#| fig-width: 6
+#| fig-height: 4
+
+f <- function(x) x^3 - x - 4
+
+df <- data.frame(
+  x = seq(0, 3, length.out = 800)
+)
+
+df$y <- f(df$x)
+
+ggplot(df, aes(x = x, y = y)) +
+  annotate(
+    "rect",
+    xmin = 1,
+    xmax = 2,
+    ymin = -Inf,
+    ymax = Inf,
+    alpha = 0.15
+  ) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  annotate("point", x = 1, y = f(1), size = 3) +
+  annotate("point", x = 2, y = f(2), size = 3) +
+  annotate("text", x = 1, y = f(1) - 1, label = "f(1) < 0") +
+  annotate("text", x = 2, y = f(2) + 1, label = "f(2) > 0") +
+  labs(
+    title = "Change of sign",
+    subtitle = "The shaded interval contains a root because the function changes sign.",
+    x = "x",
+    y = "f(x)"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Show that the equation
+
+$$
+x^3-x-4=0
+$$
+
+has a root between $1$ and $2$.
+
+Let
+
+$$
+f(x)=x^3-x-4.
+$$
+
+Then
+
+$$
+f(1)=1^3-1-4=-4.
+$$
+
+Also,
+
+$$
+f(2)=2^3-2-4=2.
+$$
+
+Since
+
+$$
+f(1)<0
+$$
+
+and
+
+$$
+f(2)>0,
+$$
+
+there is a change of sign between $1$ and $2$.
+
+Therefore, since $f$ is continuous, the equation
+
+$$
+x^3-x-4=0
+$$
+
+has at least one root between $1$ and $2$.
+
+### Short investigation
+
+Use R to test smaller intervals for the root of
+
+$$
+x^3-x-4=0.
+$$
+
+```{r}
+#| label: tbl-sign-change-table
+#| echo: true
+
+f <- function(x) x^3 - x - 4
+
+test_points <- seq(1.6, 1.9, by = 0.05)
+
+data.frame(
+  x = test_points,
+  f_x = round(f(test_points), 6)
+)
+```
+
+This table helps us identify a smaller interval containing the root.
+
+### Exercises 6.1
+
+#### Bronze
+
+1. Show that $x^2-3=0$ has a root between $1$ and $2$.
+2. Show that $x^3-2x-5=0$ has a root between $2$ and $3$.
+3. Show that $e^x-3=0$ has a root between $1$ and $2$.
+4. Show that $\ln x+x-2=0$ has a root between $1$ and $2$.
+5. Show that $\cos x-x=0$ has a root between $0$ and $1$.
+
+#### Silver
+
+1. Show that $x^3-x-4=0$ has a root between $1.7$ and $1.8$.
+2. Show that $x^3-2x-2=0$ has a root between $1.7$ and $1.8$.
+3. Show that $e^{-x}-x=0$ has a root between $0.5$ and $0.6$.
+4. Show that $\ln x+x-3=0$ has a root between $2$ and $3$.
+5. Show that $x^3-6x+2=0$ has roots in each of the intervals $(-3,-2)$, $(0,1)$ and $(2,3)$.
+
+#### Gold
+
+1. Show that $\ln x+x-2=0$ has exactly one root for $x>0$.
+2. Show that $x^3-3x+1=0$ has three roots, one in each of the intervals $(-2,-1)$, $(0,1)$ and $(1,2)$.
+3. Explain why a change of sign does not guarantee a root if the function is not continuous.
+4. Explain why no change of sign does not prove that there is no root.
+5. Show that the root of $x^3-x-4=0$ is between $1.7955$ and $1.7965$.
+
+## 6.2 Improving your solution
+
+### Key mathematical ideas
+
+Once we have a starting point or a starting interval, we can improve the approximation using an **iterative formula**.
+
+An iterative formula has the form
+
+$$
+x_{n+1}=g(x_n).
+$$
+
+This means:
+
+- start with an initial value $x_1$;
+- substitute it into the formula to get $x_2$;
+- substitute $x_2$ into the formula to get $x_3$;
+- continue until the values appear stable to the required accuracy.
+
+If the sequence converges to a value $\alpha$, then
+
+$$
+\alpha=g(\alpha).
+$$
+
+So $\alpha$ is a fixed point of $g$.
+
+An iteration may:
+
+- converge quickly;
+- converge slowly;
+- oscillate while converging;
+- enter a periodic loop;
+- diverge.
+
+A starting point and a rearrangement must therefore be chosen carefully.
+
+### Visualisation using R: convergence
+
+```{r}
+#| label: fig-cobweb-convergence
+#| fig-cap: "Cobweb diagram for x_{n+1} = (x_n + 4)^(1/3), starting from x_1 = 1.5."
+#| fig-width: 6
+#| fig-height: 5
+
+g <- function(x) (x + 4)^(1 / 3)
+
+curve_df <- data.frame(
+  x = seq(1.2, 2.2, length.out = 800)
+)
+
+curve_df$g_x <- g(curve_df$x)
+
+line_df <- data.frame(
+  x = seq(1.2, 2.2, length.out = 800)
+)
+
+line_df$y <- line_df$x
+
+segments_df <- make_cobweb(g, 1.5, 6)
+
+ggplot() +
+  geom_line(data = curve_df, aes(x = x, y = g_x), linewidth = 1.1) +
+  geom_line(data = line_df, aes(x = x, y = y), linetype = "dashed", linewidth = 1.1) +
+  geom_segment(
+    data = segments_df,
+    aes(x = x, y = y, xend = xend, yend = yend),
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Convergent fixed-point iteration",
+    subtitle = "The cobweb moves towards the fixed point.",
+    x = "x_n",
+    y = "x_{n+1}"
+  ) +
+  coord_equal() +
+  book_theme()
+```
+
+### Worked example
+
+The equation
+
+$$
+x^3-x-4=0
+$$
+
+can be rearranged as
+
+$$
+x=\sqrt[3]{x+4}.
+$$
+
+This gives the iterative formula
+
+$$
+x_{n+1}=\sqrt[3]{x_n+4}.
+$$
+
+Starting with
+
+$$
+x_1=1.5,
+$$
+
+we obtain
+
+$$
+x_2=\sqrt[3]{1.5+4}=1.765174\ldots
+$$
+
+Then
+
+$$
+x_3=\sqrt[3]{1.765174\ldots+4}=1.793098\ldots
+$$
+
+and
+
+$$
+x_4=1.795988\ldots
+$$
+
+Continuing,
+
+$$
+x_5=1.796287\ldots
+$$
+
+and
+
+$$
+x_6=1.796318\ldots
+$$
+
+The values are settling down to
+
+$$
+x\approx1.796.
+$$
+
+Therefore, the root of
+
+$$
+x^3-x-4=0
+$$
+
+is approximately
+
+$$
+1.796
+$$
+
+to three decimal places.
+
+### Why starting point and rearrangement matter
+
+The same equation
+
+$$
+x^3-x-4=0
+$$
+
+can also be rearranged as
+
+$$
+x=x^3-4.
+$$
+
+This gives
+
+$$
+x_{n+1}=x_n^3-4.
+$$
+
+Starting from $x_1=1.5$ gives
+
+$$
+x_2=-0.625,
+$$
+
+$$
+x_3=-4.244140625,
+$$
+
+and then the values move rapidly away from the root.
+
+So the rearrangement
+
+$$
+x_{n+1}=x_n^3-4
+$$
+
+is a poor iteration for this root.
+
+### Visualisation using R: divergence
+
+```{r}
+#| label: fig-divergent-iteration
+#| fig-cap: "Divergence for x_{n+1} = x_n^3 - 4, starting from x_1 = 1.5."
+#| fig-width: 6
+#| fig-height: 4
+
+g_diverge <- function(x) x^3 - 4
+
+iteration_df <- fixed_point_steps(g_diverge, 1.5, 4)
+iteration_df$x_clipped <- pmax(pmin(iteration_df$x_value, 10), -10)
+
+ggplot(iteration_df, aes(x = iteration, y = x_clipped)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 3) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "A divergent iteration",
+    subtitle = "Values have been clipped to the interval [-10, 10] for readability.",
+    x = "iteration",
+    y = "x_n"
+  ) +
+  book_theme()
+```
+
+### Visualisation using R: periodic loop
+
+The formula
+
+$$
+x_{n+1}=1-x_n
+$$
+
+has fixed point
+
+$$
+x=\dfrac{1}{2}.
+$$
+
+But if we start from
+
+$$
+x_1=0.2,
+$$
+
+then
+
+$$
+x_2=0.8,
+$$
+
+$$
+x_3=0.2,
+$$
+
+and the sequence loops forever.
+
+```{r}
+#| label: fig-periodic-loop
+#| fig-cap: "A period-two loop for x_{n+1} = 1 - x_n."
+#| fig-width: 6
+#| fig-height: 5
+
+g_period <- function(x) 1 - x
+
+curve_df <- data.frame(
+  x = seq(0, 1, length.out = 800)
+)
+
+curve_df$g_x <- g_period(curve_df$x)
+
+line_df <- data.frame(
+  x = seq(0, 1, length.out = 800)
+)
+
+line_df$y <- line_df$x
+
+segments_df <- make_cobweb(g_period, 0.2, 6)
+
+ggplot() +
+  geom_line(data = curve_df, aes(x = x, y = g_x), linewidth = 1.1) +
+  geom_line(data = line_df, aes(x = x, y = y), linetype = "dashed", linewidth = 1.1) +
+  geom_segment(
+    data = segments_df,
+    aes(x = x, y = y, xend = xend, yend = yend),
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Periodic loop",
+    subtitle = "The sequence alternates between 0.2 and 0.8.",
+    x = "x_n",
+    y = "x_{n+1}"
+  ) +
+  coord_equal() +
+  book_theme()
+```
+
+### A useful convergence test
+
+Suppose the iteration is
+
+$$
+x_{n+1}=g(x_n)
+$$
+
+and $\alpha$ is a fixed point.
+
+If
+
+$$
+|g'(\alpha)|<1,
+$$
+
+then the iteration is usually locally convergent near $\alpha$.
+
+If
+
+$$
+|g'(\alpha)|>1,
+$$
+
+then the iteration is usually locally divergent near $\alpha$.
+
+For
+
+$$
+g(x)=\sqrt[3]{x+4},
+$$
+
+we have
+
+$$
+g'(x)=\dfrac{1}{3(x+4)^{2/3}}.
+$$
+
+Near the root $\alpha\approx1.796$,
+
+$$
+|g'(\alpha)|\approx0.103<1,
+$$
+
+so the iteration converges.
+
+For
+
+$$
+g(x)=x^3-4,
+$$
+
+we have
+
+$$
+g'(x)=3x^2.
+$$
+
+Near $\alpha\approx1.796$,
+
+$$
+|g'(\alpha)|\approx9.68>1,
+$$
+
+so the iteration diverges.
+
+### Exercises 6.2
+
+#### Bronze
+
+1. Use $x_{n+1}=\sqrt{2+x_n}$ with $x_1=1$ to find $x_2$, $x_3$ and $x_4$.
+2. Use $x_{n+1}=\sqrt[3]{x_n+4}$ with $x_1=1.5$ to find $x_2$, $x_3$ and $x_4$.
+3. Use $x_{n+1}=\cos x_n$ with $x_1=0.5$ to find $x_2$, $x_3$ and $x_4$.
+4. Use $x_{n+1}=e^{-x_n}$ with $x_1=0.5$ to find $x_2$, $x_3$ and $x_4$.
+5. Use $x_{n+1}=1-x_n$ with $x_1=0.2$ to find $x_2$, $x_3$, $x_4$ and $x_5$.
+
+#### Silver
+
+1. Use $x_{n+1}=\sqrt{2+x_n}$ with $x_1=1$ to estimate the fixed point to three decimal places.
+2. Use $x_{n+1}=\sqrt[3]{x_n+4}$ with $x_1=1.5$ to estimate the root of $x^3-x-4=0$ to three decimal places.
+3. Use $x_{n+1}=e^{-x_n}$ with $x_1=0.5$ to estimate the solution of $e^{-x}=x$ to three decimal places.
+4. Show that $x_{n+1}=x_n^3-4$ diverges when $x_1=1.5$.
+5. Show that $x_{n+1}=\dfrac{2}{x_n}$ enters a periodic loop when $x_1=1$.
+
+#### Gold
+
+1. For the equation $x^3-x-4=0$, compare the two iterations
+   $$
+   x_{n+1}=\sqrt[3]{x_n+4}
+   $$
+   and
+   $$
+   x_{n+1}=x_n^3-4.
+   $$
+   Explain why one is suitable and the other is not.
+2. Prove that the iteration $x_{n+1}=1-x_n$ enters a period-two loop unless $x_1=\dfrac{1}{2}$.
+3. Explain why $x_{n+1}=e^{-x_n}$ converges with oscillation near its fixed point.
+4. Suppose an iteration $x_{n+1}=g(x_n)$ converges to a value $L$. Prove that $L=g(L)$, assuming $g$ is continuous.
+5. Use the iteration
+   $$
+   x_{n+1}=\dfrac{1}{2}\left(x_n+\dfrac{3}{x_n}\right)
+   $$
+   with $x_1=2$ to estimate $\sqrt3$ to five decimal places.
+
+## 6.3 Using iterative processes to solve problems involving other areas of mathematics
+
+### Key mathematical ideas
+
+Iteration is not restricted to polynomial equations. It can be used in many areas of mathematics, including:
+
+- exponential equations;
+- logarithmic equations;
+- trigonometric equations;
+- geometry problems leading to transcendental equations;
+- equations where exact algebraic methods are unavailable.
+
+For example, the equation
+
+$$
+\cos x=x
+$$
+
+cannot be solved exactly using elementary algebra.
+
+But it can be written as
+
+$$
+x=\cos x,
+$$
+
+which gives the iteration
+
+$$
+x_{n+1}=\cos x_n.
+$$
+
+The solution is the fixed point where the graphs of
+
+$$
+y=\cos x
+$$
+
+and
+
+$$
+y=x
+$$
+
+intersect.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-cos-fixed-point
+#| fig-cap: "Solving cos(x) = x using fixed-point iteration."
+#| fig-width: 6
+#| fig-height: 5
+
+g_cos <- function(x) cos(x)
+
+curve_df <- data.frame(
+  x = seq(0, 1.2, length.out = 800)
+)
+
+curve_df$g_x <- g_cos(curve_df$x)
+
+line_df <- data.frame(
+  x = seq(0, 1.2, length.out = 800)
+)
+
+line_df$y <- line_df$x
+
+segments_df <- make_cobweb(g_cos, 0.5, 8)
+
+ggplot() +
+  geom_line(data = curve_df, aes(x = x, y = g_x), linewidth = 1.1) +
+  geom_line(data = line_df, aes(x = x, y = y), linetype = "dashed", linewidth = 1.1) +
+  geom_segment(
+    data = segments_df,
+    aes(x = x, y = y, xend = xend, yend = yend),
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Fixed point of cos(x)",
+    subtitle = "The iteration x_{n+1} = cos(x_n) converges to approximately 0.739.",
+    x = "x_n",
+    y = "x_{n+1}"
+  ) +
+  coord_equal() +
+  book_theme()
+```
+
+### Worked example
+
+Use iteration to solve
+
+$$
+\cos x=x
+$$
+
+to three decimal places.
+
+Use
+
+$$
+x_{n+1}=\cos x_n
+$$
+
+with
+
+$$
+x_1=0.5.
+$$
+
+Then
+
+$$
+x_2=\cos(0.5)=0.877582\ldots
+$$
+
+$$
+x_3=\cos(0.877582\ldots)=0.639012\ldots
+$$
+
+$$
+x_4=0.802685\ldots
+$$
+
+The values oscillate but slowly converge.
+
+Continuing gives
+
+$$
+x\approx0.739.
+$$
+
+Therefore, the solution of
+
+$$
+\cos x=x
+$$
+
+is
+
+$$
+x=0.739
+$$
+
+to three decimal places.
+
+### A trigonometric example
+
+The equation
+
+$$
+\theta=2\sin\theta
+$$
+
+has the fixed-point iteration
+
+$$
+\theta_{n+1}=2\sin\theta_n.
+$$
+
+This type of equation can occur when a geometric or circular problem produces both a linear angle term and a trigonometric term.
+
+```{r}
+#| label: fig-theta-two-sin-theta
+#| fig-cap: "Solving theta = 2 sin(theta) using iteration."
+#| fig-width: 6
+#| fig-height: 5
+
+g_theta <- function(theta) 2 * sin(theta)
+
+curve_df <- data.frame(
+  theta = seq(0, 2.4, length.out = 800)
+)
+
+curve_df$g_theta <- g_theta(curve_df$theta)
+
+line_df <- data.frame(
+  theta = seq(0, 2.4, length.out = 800)
+)
+
+line_df$y <- line_df$theta
+
+segments_df <- make_cobweb(g_theta, 1.85, 10)
+
+ggplot() +
+  geom_line(data = curve_df, aes(x = theta, y = g_theta), linewidth = 1.1) +
+  geom_line(data = line_df, aes(x = theta, y = y), linetype = "dashed", linewidth = 1.1) +
+  geom_segment(
+    data = segments_df,
+    aes(x = x, y = y, xend = xend, yend = yend),
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Iteration for theta = 2 sin(theta)",
+    subtitle = "The non-zero solution is approximately 1.895.",
+    x = "theta_n",
+    y = "theta_{n+1}"
+  ) +
+  coord_equal() +
+  book_theme()
+```
+
+### Worked example
+
+Use the iteration
+
+$$
+\theta_{n+1}=2\sin\theta_n
+$$
+
+with
+
+$$
+\theta_1=1.85
+$$
+
+to solve
+
+$$
+\theta=2\sin\theta
+$$
+
+to three decimal places.
+
+The first few iterations are
+
+$$
+\theta_2=1.922550\ldots,
+$$
+
+$$
+\theta_3=1.877539\ldots,
+$$
+
+$$
+\theta_4=1.906644\ldots,
+$$
+
+$$
+\theta_5=1.888262\ldots.
+$$
+
+The sequence oscillates while converging.
+
+Continuing gives
+
+$$
+\theta\approx1.895.
+$$
+
+To confirm the rounding, define
+
+$$
+f(\theta)=\theta-2\sin\theta.
+$$
+
+Then
+
+$$
+f(1.8945)<0
+$$
+
+and
+
+$$
+f(1.8955)>0.
+$$
+
+Therefore, the non-zero solution is
+
+$$
+\theta=1.895
+$$
+
+to three decimal places.
+
+### Short investigation
+
+Compare four different iterative behaviours.
+
+```{r}
+#| label: tbl-iteration-behaviours
+#| echo: true
+
+iterations <- data.frame(
+  behaviour = c(
+    "converges quickly",
+    "oscillates but converges",
+    "periodic loop",
+    "diverges"
+  ),
+  iteration = c(
+    "x_{n+1} = (x_n + 4)^(1/3)",
+    "x_{n+1} = cos(x_n)",
+    "x_{n+1} = 1 - x_n",
+    "x_{n+1} = x_n^3 - 4"
+  ),
+  starting_value = c(1.5, 0.5, 0.2, 1.5)
+)
+
+iterations
+```
+
+### Exercises 6.3
+
+#### Bronze
+
+1. Use $x_{n+1}=\cos x_n$ with $x_1=0.5$ to solve $\cos x=x$ to three decimal places.
+2. Use $x_{n+1}=e^{-x_n}$ with $x_1=0.5$ to solve $e^{-x}=x$ to three decimal places.
+3. Use $\theta_{n+1}=2\sin\theta_n$ with $\theta_1=1.85$ to estimate the non-zero solution of $\theta=2\sin\theta$.
+4. Use $x_{n+1}=\ln(x_n+2)$ with $x_1=1$ to solve $\ln(x+2)=x$ to three decimal places.
+5. The iteration $x_{n+1}=\sqrt{x_n+6}$ has a positive fixed point. Find the equation satisfied by this fixed point and hence find its value.
+
+#### Silver
+
+1. Use a suitable iteration to solve $x^3-x-4=0$ to three decimal places.
+2. Use $\theta_{n+1}=2\sin\theta_n$ to solve $\theta=2\sin\theta$ to three decimal places.
+3. Explain why the iteration $x_{n+1}=\dfrac{2}{x_n}$ is not suitable for finding $\sqrt2$ when $x_1=1$.
+4. Explain why the iteration $x_{n+1}=2x_n-1$ is not suitable for finding its fixed point unless the starting value is already correct.
+5. Use $x_{n+1}=\ln(x_n+2)$ with $x_1=1$ to solve $\ln(x+2)=x$ to three decimal places.
+
+#### Gold
+
+1. Prove that $\cos x=x$ has exactly one solution in the interval $(0,1)$.
+2. Show that the iteration $x_{n+1}=e^{-x_n}$ converges with oscillation near its fixed point.
+3. Prove that $x_{n+1}=1-x_n$ enters a period-two loop unless $x_1=\dfrac{1}{2}$.
+4. Use a change of sign test to confirm that the root of $x^3-x-4=0$ is $1.796$ to three decimal places.
+5. Use a change of sign test to confirm that the non-zero solution of $\theta=2\sin\theta$ is $1.895$ to three decimal places.
+
+## STEP-style extension questions
+
+These questions are designed to require proof, structure or exact reasoning.
+
+### STEP-style Question 1
+
+Let $f$ be continuous on $[a,b]$.
+
+Suppose
+
+$$
+f(a)<0
+$$
+
+and
+
+$$
+f(b)>0.
+$$
+
+Explain why there must be at least one value $\alpha\in(a,b)$ such that
+
+$$
+f(\alpha)=0.
+$$
+
+Then give an example showing why continuity is needed.
+
+### STEP-style Question 2
+
+Suppose $g$ maps the interval $[a,b]$ into itself and there is a constant $k$ such that
+
+$$
+0<k<1
+$$
+
+and
+
+$$
+|g'(x)|\leq k
+$$
+
+for every $x\in[a,b]$.
+
+Let $\alpha$ be a fixed point of $g$ in $[a,b]$.
+
+Show that the iteration
+
+$$
+x_{n+1}=g(x_n)
+$$
+
+satisfies
+
+$$
+|x_{n+1}-\alpha|\leq k|x_n-\alpha|.
+$$
+
+Hence explain why the iteration converges to $\alpha$.
+
+### STEP-style Question 3
+
+The equation
+
+$$
+x^2=2
+$$
+
+can be written as
+
+$$
+x=\dfrac{2}{x}.
+$$
+
+This gives the iteration
+
+$$
+x_{n+1}=\dfrac{2}{x_n}.
+$$
+
+Show that if $x_1\neq\sqrt2$ and $x_1\neq-\sqrt2$, then the sequence does not converge but enters a period-two loop.
+
+### STEP-style Question 4
+
+The equation
+
+$$
+x^3-x-4=0
+$$
+
+can be rearranged in two ways:
+
+$$
+x=\sqrt[3]{x+4}
+$$
+
+and
+
+$$
+x=x^3-4.
+$$
+
+Let $\alpha$ be the root between $1$ and $2$.
+
+Use derivatives of the two iteration functions to explain why
+
+$$
+x_{n+1}=\sqrt[3]{x_n+4}
+$$
+
+converges near $\alpha$, while
+
+$$
+x_{n+1}=x_n^3-4
+$$
+
+diverges near $\alpha$.
+
+### STEP-style Question 5
+
+Let
+
+$$
+f(x)=\cos x-x.
+$$
+
+Use calculus and a change of sign argument to prove that the equation
+
+$$
+\cos x=x
+$$
+
+has exactly one solution in $[0,1]$.
+
+Then explain why the iteration
+
+$$
+x_{n+1}=\cos x_n
+$$
+
+converges with oscillation when started near the solution.
+
+## Reflection questions
+
+1. Why is a starting point needed before using an iterative method?
+2. What does a change of sign tell us about a continuous function?
+3. Why does no change of sign not always rule out a root?
+4. What is a fixed point of an iteration?
+5. Why can two rearrangements of the same equation behave differently?
+6. What does a cobweb diagram show about convergence?
+7. How can a starting point cause a periodic loop?
+8. Why might an iteration diverge even though it has the correct fixed point?
+9. What can R show clearly about iteration that numerical tables may hide?
+10. What can exact reasoning prove that numerical iteration can only suggest?
+
+## Answers
+
+### Answers to Exercises 6.1
+
+#### Bronze
+
+1. Let $f(x)=x^2-3$. Then $f(1)=-2$ and $f(2)=1$, so there is a root between $1$ and $2$.
+2. Let $f(x)=x^3-2x-5$. Then $f(2)=-1$ and $f(3)=16$, so there is a root between $2$ and $3$.
+3. Let $f(x)=e^x-3$. Then $f(1)=e-3<0$ and $f(2)=e^2-3>0$, so there is a root between $1$ and $2$.
+4. Let $f(x)=\ln x+x-2$. Then $f(1)=-1$ and $f(2)=\ln2>0$, so there is a root between $1$ and $2$.
+5. Let $f(x)=\cos x-x$. Then $f(0)=1$ and $f(1)=\cos1-1<0$, so there is a root between $0$ and $1$.
+
+#### Silver
+
+1. For $f(x)=x^3-x-4$, $f(1.7)=-0.787$ and $f(1.8)=0.032$, so there is a root between $1.7$ and $1.8$.
+2. For $f(x)=x^3-2x-2$, $f(1.7)=-0.487$ and $f(1.8)=0.232$, so there is a root between $1.7$ and $1.8$.
+3. For $f(x)=e^{-x}-x$, $f(0.5)=0.1065\ldots$ and $f(0.6)=-0.0512\ldots$, so there is a root between $0.5$ and $0.6$.
+4. For $f(x)=\ln x+x-3$, $f(2)=\ln2-1<0$ and $f(3)=\ln3>0$, so there is a root between $2$ and $3$.
+5. For $f(x)=x^3-6x+2$, there are sign changes on $(-3,-2)$, $(0,1)$ and $(2,3)$, so each interval contains a root.
+
+#### Gold
+
+1. Let $f(x)=\ln x+x-2$. Since
+   $$
+   f'(x)=\dfrac{1}{x}+1>0
+   $$
+   for $x>0$, $f$ is strictly increasing. Since $f(1)<0$ and $f(2)>0$, there is exactly one root for $x>0$.
+2. Let $f(x)=x^3-3x+1$. We have sign changes on $(-2,-1)$, $(0,1)$ and $(1,2)$, so the equation has roots in all three intervals.
+3. For example,
+   $$
+   f(x)=\dfrac{1}{x-1}
+   $$
+   has $f(0)<0$ and $f(2)>0$, but it has no root between $0$ and $2$. The sign change occurs because of a discontinuity.
+4. For example,
+   $$
+   f(x)=(x-1)^2
+   $$
+   has no sign change between $0$ and $2$, but it has a root at $x=1$.
+5. For $f(x)=x^3-x-4$, $f(1.7955)<0$ and $f(1.7965)>0$, so the root lies between $1.7955$ and $1.7965$. Therefore the root is $1.796$ to three decimal places.
+
+### Answers to Exercises 6.2
+
+#### Bronze
+
+1. $x_2=1.7321$, $x_3=1.9319$, $x_4=1.9829$.
+2. $x_2=1.7652$, $x_3=1.7931$, $x_4=1.7960$.
+3. $x_2=0.8776$, $x_3=0.6390$, $x_4=0.8027$.
+4. $x_2=0.6065$, $x_3=0.5452$, $x_4=0.5797$.
+5. $x_2=0.8$, $x_3=0.2$, $x_4=0.8$, $x_5=0.2$.
+
+#### Silver
+
+1. The iteration converges to $x=2.000$.
+2. The root is $x=1.796$ to three decimal places.
+3. The solution is $x=0.567$ to three decimal places.
+4. Starting with $x_1=1.5$, the iteration gives $x_2=-0.625$, $x_3=-4.2441\ldots$ and $x_4=-80.4486\ldots$, so it diverges.
+5. Starting with $x_1=1$, the iteration gives $x_2=2$, $x_3=1$, $x_4=2$, and so on. It enters a period-two loop.
+
+#### Gold
+
+1. For $g_1(x)=\sqrt[3]{x+4}$,
+   $$
+   |g_1'(\alpha)|\approx0.103<1,
+   $$
+   so the iteration is locally convergent. For $g_2(x)=x^3-4$,
+   $$
+   |g_2'(\alpha)|\approx9.68>1,
+   $$
+   so the iteration is locally divergent.
+2. If $x_{n+1}=1-x_n$, then
+   $$
+   x_{n+2}=1-x_{n+1}=1-(1-x_n)=x_n.
+   $$
+   Therefore the sequence repeats every two terms unless $x_n=\dfrac{1}{2}$.
+3. At the fixed point $\alpha$, $e^{-\alpha}=\alpha$. For $g(x)=e^{-x}$,
+   $$
+   g'(\alpha)=-e^{-\alpha}=-\alpha\approx-0.567.
+   $$
+   Since $|g'(\alpha)|<1$, the iteration converges. Since $g'(\alpha)<0$, it oscillates while converging.
+4. If $x_n\to L$ and $x_{n+1}=g(x_n)$, then taking limits gives
+   $$
+   L=g(L),
+   $$
+   provided $g$ is continuous.
+5. The iteration gives
+   $$
+   x_2=1.75,
+   $$
+   $$
+   x_3=1.732142857\ldots,
+   $$
+   $$
+   x_4=1.73205081\ldots.
+   $$
+   Hence
+   $$
+   \sqrt3\approx1.73205.
+   $$
+
+### Answers to Exercises 6.3
+
+#### Bronze
+
+1. $x=0.739$ to three decimal places.
+2. $x=0.567$ to three decimal places.
+3. The non-zero solution is $\theta=1.895$ to three decimal places.
+4. $x=1.146$ to three decimal places.
+5. A fixed point satisfies
+   $$
+   x=\sqrt{x+6}.
+   $$
+   Squaring gives
+   $$
+   x^2=x+6,
+   $$
+   so
+   $$
+   x^2-x-6=0.
+   $$
+   The positive fixed point is $x=3$.
+
+#### Silver
+
+1. A suitable iteration is
+   $$
+   x_{n+1}=\sqrt[3]{x_n+4}.
+   $$
+   Starting near the root gives $x=1.796$ to three decimal places.
+2. The non-zero solution is $\theta=1.895$ to three decimal places.
+3. Starting with $x_1=1$, the iteration gives $1,2,1,2,\ldots$, so it does not converge to $\sqrt2$.
+4. The fixed point satisfies $x=2x-1$, so $x=1$. But if $x_1\neq1$, then the distance from $1$ doubles each time, so the iteration diverges.
+5. The solution is $x=1.146$ to three decimal places.
+
+#### Gold
+
+1. Let $f(x)=\cos x-x$. Then
+   $$
+   f'(x)=-\sin x-1<0
+   $$
+   on $(0,1)$. So $f$ is strictly decreasing. Since $f(0)>0$ and $f(1)<0$, there is exactly one root in $(0,1)$.
+2. For $g(x)=e^{-x}$, at the fixed point $\alpha$,
+   $$
+   g'(\alpha)=-e^{-\alpha}=-\alpha.
+   $$
+   Since $\alpha\approx0.567$, we have $|g'(\alpha)|<1$, so the iteration converges. The negative derivative explains the oscillation.
+3. Since
+   $$
+   x_{n+2}=1-x_{n+1}=1-(1-x_n)=x_n,
+   $$
+   the sequence repeats every two terms. It is constant only if $x_n=1-x_n$, giving $x_n=\dfrac{1}{2}$.
+4. For $f(x)=x^3-x-4$, $f(1.7955)<0$ and $f(1.7965)>0$, so the root lies between $1.7955$ and $1.7965$. Therefore the root is $1.796$ to three decimal places.
+5. For $f(\theta)=\theta-2\sin\theta$, $f(1.8945)<0$ and $f(1.8955)>0$, so the non-zero solution lies between $1.8945$ and $1.8955$. Therefore
+   $$
+   \theta=1.895
+   $$
+   to three decimal places.
+
+### Answers to STEP-style extension questions
+
+1. Since $f$ is continuous, its graph cannot move from a negative value at $x=a$ to a positive value at $x=b$ without crossing the $x$-axis. Therefore there must be some $\alpha\in(a,b)$ such that
+   $$
+   f(\alpha)=0.
+   $$
+   Continuity is needed. For example,
+   $$
+   f(x)=\dfrac{1}{x-1}
+   $$
+   changes sign between $0$ and $2$, but has no root in that interval because it is discontinuous at $x=1$.
+
+2. By the mean value theorem, for some point $c$ between $x_n$ and $\alpha$,
+   $$
+   g(x_n)-g(\alpha)=g'(c)(x_n-\alpha).
+   $$
+   Since $g(\alpha)=\alpha$,
+   $$
+   x_{n+1}-\alpha=g'(c)(x_n-\alpha).
+   $$
+   Taking absolute values gives
+   $$
+   |x_{n+1}-\alpha|
+   =
+   |g'(c)||x_n-\alpha|
+   \leq
+   k|x_n-\alpha|.
+   $$
+   Since $0<k<1$, the error shrinks at each step, so the iteration converges to $\alpha$.
+
+3. The iteration is
+   $$
+   x_{n+1}=\dfrac{2}{x_n}.
+   $$
+   Then
+   $$
+   x_{n+2}=\dfrac{2}{x_{n+1}}
+   =
+   \dfrac{2}{\dfrac{2}{x_n}}
+   =
+   x_n.
+   $$
+   Hence the sequence repeats every two terms. It is constant only when
+   $$
+   x_n=\dfrac{2}{x_n},
+   $$
+   giving
+   $$
+   x_n^2=2.
+   $$
+   Therefore the sequence converges only if the starting value is already $\sqrt2$ or $-\sqrt2$.
+
+4. Let
+   $$
+   g_1(x)=\sqrt[3]{x+4}.
+   $$
+   Then
+   $$
+   g_1'(x)=\dfrac{1}{3(x+4)^{2/3}}.
+   $$
+   At the root $\alpha\approx1.796$,
+   $$
+   |g_1'(\alpha)|\approx0.103<1.
+   $$
+   So the iteration
+   $$
+   x_{n+1}=\sqrt[3]{x_n+4}
+   $$
+   converges near $\alpha$.
+
+   Now let
+   $$
+   g_2(x)=x^3-4.
+   $$
+   Then
+   $$
+   g_2'(x)=3x^2.
+   $$
+   At $\alpha\approx1.796$,
+   $$
+   |g_2'(\alpha)|\approx9.68>1.
+   $$
+   Therefore the iteration
+   $$
+   x_{n+1}=x_n^3-4
+   $$
+   diverges near $\alpha$.
+
+5. Let
+   $$
+   f(x)=\cos x-x.
+   $$
+   Then
+   $$
+   f(0)=1>0
+   $$
+   and
+   $$
+   f(1)=\cos1-1<0.
+   $$
+   So there is at least one root in $(0,1)$.
+
+   Also,
+   $$
+   f'(x)=-\sin x-1<0
+   $$
+   for $0\leq x\leq1$.
+   Therefore $f$ is strictly decreasing and can cross the $x$-axis only once. Hence the solution is unique.
+
+   The iteration
+   $$
+   x_{n+1}=\cos x_n
+   $$
+   has iteration function $g(x)=\cos x$. At the fixed point $\alpha$,
+   $$
+   g'(\alpha)=-\sin\alpha.
+   $$
+   Since $0<\sin\alpha<1$, we have
+   $$
+   |g'(\alpha)|<1.
+   $$
+   Therefore the iteration converges near $\alpha$. Since $g'(\alpha)<0$, the convergence is oscillatory.

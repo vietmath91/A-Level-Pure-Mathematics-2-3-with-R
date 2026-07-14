@@ -1,0 +1,1231 @@
+# Integration
+
+```{r}
+#| label: setup-integration
+#| include: false
+
+library(ggplot2)
+
+book_theme <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(size = base_size - 1),
+      panel.grid.minor = element_blank()
+    )
+}
+```
+
+## Overview
+
+This chapter develops five connected integration ideas:
+
+1. integration of exponential functions;
+2. integration of expressions of the form $\dfrac{1}{ax+b}$;
+3. integration of $\sin(ax+b)$, $\cos(ax+b)$ and $\sec^2(ax+b)$;
+4. further integration of trigonometric functions;
+5. the trapezium rule.
+
+The central aim is to treat integration as reverse differentiation, while also developing numerical and graphical ways to estimate areas.
+
+::: {.callout-note}
+The exercises are organised into tiers.
+
+**Bronze** develops fluency.  
+**Silver** develops simple application.  
+**Gold** develops exam-style reasoning.  
+The **STEP-style** section extends the chapter beyond routine A Level fluency.
+:::
+
+## 5.1 Integration of exponential functions
+
+### Key mathematical ideas
+
+Since
+
+$$
+\dfrac{d}{dx}(e^x)=e^x,
+$$
+
+we have
+
+$$
+\int e^x\,dx=e^x+C.
+$$
+
+More generally,
+
+$$
+\int e^{ax+b}\,dx=\dfrac{1}{a}e^{ax+b}+C,
+\quad a\neq0.
+$$
+
+This is because differentiating $\dfrac{1}{a}e^{ax+b}$ gives
+
+$$
+\dfrac{1}{a}\cdot ae^{ax+b}=e^{ax+b}.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-exp-integration-area
+#| fig-cap: "The area under y = e^x from x = 0 to x = 1."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0, 1, length.out = 500)
+)
+
+df$y <- exp(df$x)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_area(alpha = 0.3) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Area under y = e^x",
+    subtitle = "The exact area from 0 to 1 is e - 1.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+The exact area is
+
+$$
+\int_0^1 e^x\,dx
+=
+\left[e^x\right]_0^1
+=
+e-1.
+$$
+
+### Worked example
+
+Find
+
+$$
+\int e^{3x-2}\,dx.
+$$
+
+Since the derivative of $3x-2$ is $3$, we divide by $3$:
+
+$$
+\int e^{3x-2}\,dx
+=
+\dfrac{1}{3}e^{3x-2}+C.
+$$
+
+Check by differentiating:
+
+$$
+\dfrac{d}{dx}\left(\dfrac{1}{3}e^{3x-2}\right)
+=
+\dfrac{1}{3}\cdot3e^{3x-2}
+=
+e^{3x-2}.
+$$
+
+### Short investigation
+
+Change the value of $a$ in the code below and compare $e^{ax}$ with its antiderivative.
+
+```{r}
+#| label: fig-exp-antiderivative-family
+#| fig-cap: "The function y = e^(ax) and an antiderivative."
+#| fig-width: 6
+#| fig-height: 4
+
+a <- 2
+
+df <- data.frame(
+  x = seq(-2, 2, length.out = 600)
+)
+
+df$y_function <- exp(a * df$x)
+df$antiderivative <- (1 / a) * exp(a * df$x)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = y_function, linetype = "function"), linewidth = 1.1) +
+  geom_line(aes(y = antiderivative, linetype = "antiderivative"), linewidth = 1.1) +
+  labs(
+    title = paste0("Function and antiderivative for y = e^(", a, "x)"),
+    subtitle = "The antiderivative is divided by the coefficient of x.",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Exercises 5.1
+
+#### Bronze
+
+1. Find $\int e^x\,dx$.
+2. Find $\int e^{3x}\,dx$.
+3. Find $\int 5e^{2x}\,dx$.
+4. Find $\int e^{-x}\,dx$.
+5. Find $\int 4e^{1-2x}\,dx$.
+
+#### Silver
+
+1. Find $\int \left(e^x+2e^{3x}\right)\,dx$.
+2. Find $\int 3e^{2x-1}\,dx$.
+3. Evaluate $\int_0^1 e^{2x}\,dx$.
+4. Evaluate $\int_0^{\ln2} e^x\,dx$.
+5. Find $a$ if $\int e^{ax}\,dx=\dfrac{1}{5}e^{5x}+C$.
+
+#### Gold
+
+1. Evaluate $\int_0^1 4e^{4x}\,dx$.
+2. Find $\int e^{3x+2}\,dx$.
+3. Evaluate $\int_0^{\ln3} 2e^{2x}\,dx$.
+4. Find $k$ if $\dfrac{d}{dx}\left(ke^{-2x}\right)=e^{-2x}$.
+5. The area under $y=3e^x$ from $x=0$ to $x=a$ is $6$. Find $a$.
+
+## 5.2 Integration of $\dfrac{1}{ax+b}$
+
+### Key mathematical ideas
+
+Since
+
+$$
+\dfrac{d}{dx}\left(\ln|x|\right)=\dfrac{1}{x},
+$$
+
+we have
+
+$$
+\int \dfrac{1}{x}\,dx=\ln|x|+C.
+$$
+
+More generally,
+
+$$
+\int \dfrac{1}{ax+b}\,dx
+=
+\dfrac{1}{a}\ln|ax+b|+C,
+\quad a\neq0.
+$$
+
+This follows because differentiating $\ln|ax+b|$ gives
+
+$$
+\dfrac{a}{ax+b}.
+$$
+
+Therefore, if the numerator is exactly the derivative of the denominator, the integral becomes a logarithm.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-log-integration-area
+#| fig-cap: "The area under y = 1/(x + 1) from x = 0 to x = 2."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0, 2, length.out = 500)
+)
+
+df$y <- 1 / (df$x + 1)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_area(alpha = 0.3) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Area under y = 1/(x + 1)",
+    subtitle = "The exact area from 0 to 2 is ln 3.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+The exact area is
+
+$$
+\int_0^2 \dfrac{1}{x+1}\,dx
+=
+\left[\ln|x+1|\right]_0^2
+=
+\ln3.
+$$
+
+### Worked example
+
+Find
+
+$$
+\int \dfrac{5}{2x-3}\,dx.
+$$
+
+Since
+
+$$
+\int \dfrac{1}{2x-3}\,dx
+=
+\dfrac{1}{2}\ln|2x-3|+C,
+$$
+
+we have
+
+$$
+\int \dfrac{5}{2x-3}\,dx
+=
+\dfrac{5}{2}\ln|2x-3|+C.
+$$
+
+### Short investigation
+
+Change the values of $a$ and $b$ below.
+
+```{r}
+#| label: fig-log-antiderivative-family
+#| fig-cap: "The function y = 1/(ax + b) and an antiderivative."
+#| fig-width: 6
+#| fig-height: 4
+
+a <- 2
+b <- 1
+
+df <- data.frame(
+  x = seq(0.1, 5, length.out = 600)
+)
+
+df$y_function <- 1 / (a * df$x + b)
+df$antiderivative <- (1 / a) * log(abs(a * df$x + b))
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = y_function, linetype = "function"), linewidth = 1.1) +
+  geom_line(aes(y = antiderivative, linetype = "antiderivative"), linewidth = 1.1) +
+  labs(
+    title = paste0("Function and antiderivative for y = 1/(", a, "x + ", b, ")"),
+    subtitle = "The antiderivative is logarithmic.",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Exercises 5.2
+
+#### Bronze
+
+1. Find $\int \dfrac{1}{x}\,dx$.
+2. Find $\int \dfrac{1}{x+2}\,dx$.
+3. Find $\int \dfrac{1}{2x+1}\,dx$.
+4. Find $\int \dfrac{3}{3x-4}\,dx$.
+5. Find $\int \dfrac{5}{x-1}\,dx$.
+
+#### Silver
+
+1. Find $\int \dfrac{4}{2x+3}\,dx$.
+2. Find $\int \dfrac{7}{5x-2}\,dx$.
+3. Evaluate $\int_0^1 \dfrac{1}{x+1}\,dx$.
+4. Evaluate $\int_1^3 \dfrac{2}{2x+1}\,dx$.
+5. Find $a$ and $b$ if
+   $$
+   \int \dfrac{1}{ax+b}\,dx=\dfrac{1}{4}\ln|4x-3|+C.
+   $$
+
+#### Gold
+
+1. Evaluate $\int_0^2 \dfrac{3}{3x+1}\,dx$.
+2. Evaluate $\int_0^2 \dfrac{5}{5x+2}\,dx$.
+3. Solve
+   $$
+   \int_0^a \dfrac{1}{x+1}\,dx=\ln5.
+   $$
+4. Find
+   $$
+   \int \left(\dfrac{1}{x+1}+\dfrac{1}{x+2}\right)\,dx.
+   $$
+5. Find $k$ if
+   $$
+   \int_0^1 \dfrac{k}{2x+1}\,dx=\ln3.
+   $$
+
+## 5.3 Integration of $\sin(ax+b)$, $\cos(ax+b)$ and $\sec^2(ax+b)$
+
+### Key mathematical ideas
+
+Angles are measured in radians.
+
+The standard trigonometric integrals are
+
+$$
+\int \sin x\,dx=-\cos x+C,
+$$
+
+$$
+\int \cos x\,dx=\sin x+C,
+$$
+
+and
+
+$$
+\int \sec^2x\,dx=\tan x+C.
+$$
+
+Using the chain rule in reverse,
+
+$$
+\int \sin(ax+b)\,dx
+=
+-\dfrac{1}{a}\cos(ax+b)+C,
+$$
+
+$$
+\int \cos(ax+b)\,dx
+=
+\dfrac{1}{a}\sin(ax+b)+C,
+$$
+
+and
+
+$$
+\int \sec^2(ax+b)\,dx
+=
+\dfrac{1}{a}\tan(ax+b)+C.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-trig-integration
+#| fig-cap: "The function y = cos(2x) and an antiderivative."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-pi, pi, length.out = 800)
+)
+
+df$y_function <- cos(2 * df$x)
+df$antiderivative <- 0.5 * sin(2 * df$x)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = y_function, linetype = "function"), linewidth = 1.1) +
+  geom_line(aes(y = antiderivative, linetype = "antiderivative"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Function and antiderivative for y = cos(2x)",
+    subtitle = "The antiderivative is 0.5 sin(2x).",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Find
+
+$$
+\int 6\sin(3x-1)\,dx.
+$$
+
+Since
+
+$$
+\int \sin(3x-1)\,dx
+=
+-\dfrac{1}{3}\cos(3x-1)+C,
+$$
+
+we have
+
+$$
+\int 6\sin(3x-1)\,dx
+=
+-2\cos(3x-1)+C.
+$$
+
+Check by differentiating:
+
+$$
+\dfrac{d}{dx}\left(-2\cos(3x-1)\right)
+=
+6\sin(3x-1).
+$$
+
+### Short investigation
+
+Compare $\sec^2x$ and its antiderivative $\tan x$.
+
+```{r}
+#| label: fig-sec2-tan
+#| fig-cap: "The function y = sec^2(x) and its antiderivative y = tan(x)."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-1.2, 1.2, length.out = 600)
+)
+
+df$y_function <- 1 / cos(df$x)^2
+df$antiderivative <- tan(df$x)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = y_function, linetype = "sec^2(x)"), linewidth = 1.1) +
+  geom_line(aes(y = antiderivative, linetype = "tan(x)"), linewidth = 1.1) +
+  labs(
+    title = "Function and antiderivative",
+    subtitle = "The derivative of tan(x) is sec^2(x).",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Exercises 5.3
+
+#### Bronze
+
+1. Find $\int \cos x\,dx$.
+2. Find $\int \sin x\,dx$.
+3. Find $\int \sec^2x\,dx$.
+4. Find $\int \cos2x\,dx$.
+5. Find $\int \sin3x\,dx$.
+
+#### Silver
+
+1. Find $\int 4\cos(2x+1)\,dx$.
+2. Find $\int 6\sin(3x-2)\,dx$.
+3. Find $\int 5\sec^2(5x)\,dx$.
+4. Evaluate $\int_0^{\dfrac{\pi}{2}}\cos x\,dx$.
+5. Evaluate $\int_0^{\dfrac{\pi}{4}}\sec^2x\,dx$.
+
+#### Gold
+
+1. Evaluate $\int_0^{\dfrac{\pi}{6}}3\cos3x\,dx$.
+2. Evaluate $\int_0^{\dfrac{\pi}{2}}2\sin x\,dx$.
+3. Evaluate $\int_0^{\dfrac{\pi}{8}}4\sec^2(2x)\,dx$.
+4. Find $a$ if
+   $$
+   \int_0^{\dfrac{\pi}{6}}a\cos2x\,dx=3.
+   $$
+5. Solve
+   $$
+   \int_0^x \cos2t\,dt=\dfrac{1}{2}
+   $$
+   for $0\leq x\leq\dfrac{\pi}{2}$.
+
+## 5.4 Further integration of trigonometric functions
+
+### Key mathematical ideas
+
+Some trigonometric integrals require identities before they can be integrated.
+
+The most useful identities in this section are
+
+$$
+\sin^2x=\dfrac{1-\cos2x}{2},
+$$
+
+$$
+\cos^2x=\dfrac{1+\cos2x}{2},
+$$
+
+and
+
+$$
+2\sin x\cos x=\sin2x.
+$$
+
+These identities turn powers or products of trigonometric functions into expressions that can be integrated directly.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-sin-squared-identity
+#| fig-cap: "Checking sin^2(x) = (1 - cos(2x))/2."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0, 2 * pi, length.out = 800)
+)
+
+df$left_side <- sin(df$x)^2
+df$right_side <- (1 - cos(2 * df$x)) / 2
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = left_side, linetype = "sin^2(x)"), linewidth = 1.1) +
+  geom_line(aes(y = right_side, linetype = "(1 - cos(2x))/2"), linewidth = 1.1) +
+  labs(
+    title = "Identity for sin^2(x)",
+    subtitle = "The two graphs overlap.",
+    x = "x",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Find
+
+$$
+\int \sin^2x\,dx.
+$$
+
+Using the identity
+
+$$
+\sin^2x=\dfrac{1-\cos2x}{2},
+$$
+
+we get
+
+$$
+\int \sin^2x\,dx
+=
+\int \dfrac{1-\cos2x}{2}\,dx.
+$$
+
+So
+
+$$
+\int \sin^2x\,dx
+=
+\dfrac{x}{2}-\dfrac{1}{4}\sin2x+C.
+$$
+
+### Short investigation
+
+Compare exact area under $\sin^2x$ with numerical area.
+
+```{r}
+#| label: fig-sin-squared-area
+#| fig-cap: "The area under y = sin^2(x) from 0 to pi."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0, pi, length.out = 800)
+)
+
+df$y <- sin(df$x)^2
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_area(alpha = 0.3) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Area under y = sin^2(x)",
+    subtitle = "The exact area from 0 to pi is pi/2.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Exercises 5.4
+
+#### Bronze
+
+1. Find $\int \sin^2x\,dx$.
+2. Find $\int \cos^2x\,dx$.
+3. Find $\int \sin x\cos x\,dx$.
+4. Find $\int (1+\cos2x)\,dx$.
+5. Find $\int (1-\cos2x)\,dx$.
+
+#### Silver
+
+1. Evaluate $\int_0^\pi \sin^2x\,dx$.
+2. Evaluate $\int_0^\pi \cos^2x\,dx$.
+3. Evaluate $\int_0^{\dfrac{\pi}{2}}\sin x\cos x\,dx$.
+4. Find $\int 4\cos^2x\,dx$.
+5. Find $\int 6\sin^2(2x)\,dx$.
+
+#### Gold
+
+1. Evaluate $\int_0^{\dfrac{\pi}{4}}\sin^2x\,dx$.
+2. Evaluate $\int_0^{\dfrac{\pi}{4}}\cos^2x\,dx$.
+3. Evaluate $\int_0^{\dfrac{\pi}{2}}(\sin x+\cos x)^2\,dx$.
+4. Find $k$ if
+   $$
+   \int_0^\pi k\sin^2x\,dx=5\pi.
+   $$
+5. Evaluate $\int_0^{\dfrac{\pi}{2}}\sin^2x\cos^2x\,dx$.
+
+## 5.5 The trapezium rule
+
+### Key mathematical ideas
+
+The trapezium rule estimates the area under a curve by splitting the interval into equal strips and replacing each curved strip with a trapezium.
+
+Suppose we want to estimate
+
+$$
+\int_a^b f(x)\,dx
+$$
+
+using $n$ equal strips.
+
+The strip width is
+
+$$
+h=\dfrac{b-a}{n}.
+$$
+
+The $x$-values are
+
+$$
+x_0=a,\quad x_1=a+h,\quad x_2=a+2h,\quad \ldots,\quad x_n=b.
+$$
+
+Let
+
+$$
+y_i=f(x_i).
+$$
+
+Then the trapezium rule gives
+
+$$
+\int_a^b f(x)\,dx
+\approx
+\dfrac{h}{2}
+\left[
+y_0+2y_1+2y_2+\cdots+2y_{n-1}+y_n
+\right].
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-trapezium-rule
+#| fig-cap: "Trapezium rule estimate for y = x^2 from x = 0 to x = 2."
+#| fig-width: 6
+#| fig-height: 4
+
+f <- function(x) x^2
+
+curve_df <- data.frame(
+  x = seq(0, 2, length.out = 800)
+)
+
+curve_df$y <- f(curve_df$x)
+
+x_points <- seq(0, 2, length.out = 5)
+y_points <- f(x_points)
+
+trapezia <- do.call(
+  rbind,
+  lapply(1:(length(x_points) - 1), function(i) {
+    data.frame(
+      strip = i,
+      x = c(x_points[i], x_points[i], x_points[i + 1], x_points[i + 1]),
+      y = c(0, y_points[i], y_points[i + 1], 0)
+    )
+  })
+)
+
+ggplot() +
+  geom_polygon(
+    data = trapezia,
+    aes(x = x, y = y, group = strip),
+    alpha = 0.3
+  ) +
+  geom_line(
+    data = curve_df,
+    aes(x = x, y = y),
+    linewidth = 1.1
+  ) +
+  geom_point(
+    data = data.frame(x = x_points, y = y_points),
+    aes(x = x, y = y),
+    size = 2
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Trapezium rule",
+    subtitle = "The curve y = x^2 is approximated by straight-line segments.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Use the trapezium rule with $4$ strips to estimate
+
+$$
+\int_0^2 x^2\,dx.
+$$
+
+Here,
+
+$$
+a=0,\quad b=2,\quad n=4.
+$$
+
+Therefore,
+
+$$
+h=\dfrac{2-0}{4}=\dfrac{1}{2}.
+$$
+
+The $x$-values are
+
+$$
+0,\quad \dfrac{1}{2},\quad 1,\quad \dfrac{3}{2},\quad 2.
+$$
+
+The corresponding $y$-values for $y=x^2$ are
+
+$$
+0,\quad \dfrac{1}{4},\quad 1,\quad \dfrac{9}{4},\quad 4.
+$$
+
+Using the trapezium rule,
+
+$$
+T
+=
+\dfrac{h}{2}
+\left[
+y_0+2y_1+2y_2+2y_3+y_4
+\right].
+$$
+
+So
+
+$$
+T
+=
+\dfrac{1}{4}
+\left[
+0+2\left(\dfrac{1}{4}\right)+2(1)+2\left(\dfrac{9}{4}\right)+4
+\right].
+$$
+
+Therefore,
+
+$$
+T=\dfrac{11}{4}.
+$$
+
+### Short investigation
+
+Change the number of strips and observe the estimate.
+
+```{r}
+#| label: fig-trapezium-estimate-changing-n
+#| fig-cap: "Trapezium rule estimates for y = x^2 on [0, 2]."
+#| fig-width: 6
+#| fig-height: 4
+
+trapezium_estimate <- function(f, a, b, n) {
+  x <- seq(a, b, length.out = n + 1)
+  y <- f(x)
+  h <- (b - a) / n
+  (h / 2) * (y[1] + 2 * sum(y[2:n]) + y[n + 1])
+}
+
+n_values <- 1:20
+
+df <- data.frame(
+  n = n_values,
+  estimate = sapply(
+    n_values,
+    function(n) trapezium_estimate(function(x) x^2, 0, 2, n)
+  )
+)
+
+df$exact <- 8 / 3
+
+ggplot(df, aes(x = n)) +
+  geom_line(aes(y = estimate, linetype = "trapezium estimate"), linewidth = 1.1) +
+  geom_line(aes(y = exact, linetype = "exact value"), linewidth = 1.1) +
+  labs(
+    title = "Trapezium rule estimates",
+    subtitle = "As the number of strips increases, the estimate approaches the exact value.",
+    x = "number of strips",
+    y = "area estimate",
+    linetype = "Quantity"
+  ) +
+  book_theme()
+```
+
+### Exercises 5.5
+
+#### Bronze
+
+1. Use the trapezium rule with $2$ strips to estimate $\int_0^2 x^2\,dx$.
+2. Use the trapezium rule with $4$ strips to estimate $\int_0^4 (x+1)\,dx$.
+3. Use the trapezium rule with $2$ strips to estimate $\int_1^3 \dfrac{1}{x}\,dx$.
+4. Use the trapezium rule with $1$ strip to estimate $\int_0^1 e^x\,dx$.
+5. Use the trapezium rule with $2$ strips to estimate $\int_0^{\dfrac{\pi}{2}}\cos x\,dx$.
+
+#### Silver
+
+1. Use the trapezium rule with $4$ strips to estimate $\int_0^2 x^2\,dx$.
+2. Use the trapezium rule with $2$ strips to estimate $\int_0^2 \dfrac{1}{x+1}\,dx$.
+3. Use the trapezium rule with $2$ strips to estimate $\int_0^1 e^x\,dx$.
+4. Use the trapezium rule with $4$ strips to estimate $\int_0^\pi \sin x\,dx$.
+5. Write the trapezium rule estimate using $3$ strips for $\int_a^b f(x)\,dx$.
+
+#### Gold
+
+1. Use the trapezium rule with $4$ strips to estimate $\int_0^2 x^2\,dx$, and compare it with the exact value.
+2. For $f(x)=x^2+1$, use $2$ strips on $[0,a]$. Find the positive integer $a$ such that the trapezium rule estimate is $5$.
+3. Prove that the trapezium rule is exact for any linear function $f(x)=mx+c$.
+4. Use the trapezium rule with $4$ strips to estimate $\int_1^2 \dfrac{1}{x}\,dx$.
+5. Use the trapezium rule with $3$ strips to estimate $\int_0^{\dfrac{\pi}{2}}\sin x\,dx$.
+
+## STEP-style extension questions
+
+These questions are designed to require proof, structure or exact reasoning.
+
+### STEP-style Question 1
+
+Prove that
+
+$$
+\int_0^\pi \sin^2x\,dx=\dfrac{\pi}{2}.
+$$
+
+### STEP-style Question 2
+
+Let $k>0$ and $a>0$. Suppose
+
+$$
+e^{ka}=4
+$$
+
+and
+
+$$
+\int_0^a e^{kx}\,dx=3.
+$$
+
+Find $k$ and $a$.
+
+### STEP-style Question 3
+
+Use calculus to prove that
+
+$$
+\ln(1+a)<a
+$$
+
+for all $a>0$.
+
+Then interpret the inequality in terms of the area under
+
+$$
+y=\dfrac{1}{1+x}.
+$$
+
+### STEP-style Question 4
+
+Find constants $A$ and $B$ such that
+
+$$
+F(x)=Ae^{2x}+B\sin3x
+$$
+
+is an antiderivative of
+
+$$
+6e^{2x}+12\cos3x.
+$$
+
+### STEP-style Question 5
+
+For $f(x)=x^2$ on the interval $[0,a]$, use $n$ equal strips.
+
+Prove that the trapezium rule estimate is
+
+$$
+\dfrac{a^3}{3}+\dfrac{a^3}{6n^2}.
+$$
+
+Hence explain why the trapezium rule overestimates
+
+$$
+\int_0^a x^2\,dx.
+$$
+
+## Reflection questions
+
+1. Why is integration called reverse differentiation?
+2. Why does $\int e^{ax+b}\,dx$ require division by $a$?
+3. Why does $\int \dfrac{1}{ax+b}\,dx$ produce a logarithm?
+4. Why must trigonometric integrals use radians?
+5. Why are identities useful before integrating powers of sine and cosine?
+6. What does the trapezium rule estimate geometrically?
+7. Why does increasing the number of strips usually improve the trapezium rule estimate?
+8. What can R show clearly about area that algebra alone may hide?
+9. What can exact integration prove that numerical approximation can only suggest?
+
+## Answers
+
+### Answers to Exercises 5.1
+
+#### Bronze
+
+1. $e^x+C$.
+2. $\dfrac{1}{3}e^{3x}+C$.
+3. $\dfrac{5}{2}e^{2x}+C$.
+4. $-e^{-x}+C$.
+5. $-2e^{1-2x}+C$.
+
+#### Silver
+
+1. $e^x+\dfrac{2}{3}e^{3x}+C$.
+2. $\dfrac{3}{2}e^{2x-1}+C$.
+3. $\dfrac{e^2-1}{2}$.
+4. $1$.
+5. $a=5$.
+
+#### Gold
+
+1. $e^4-1$.
+2. $\dfrac{1}{3}e^{3x+2}+C$.
+3. $8$.
+4. $k=-\dfrac{1}{2}$.
+5. $a=\ln3$.
+
+### Answers to Exercises 5.2
+
+#### Bronze
+
+1. $\ln|x|+C$.
+2. $\ln|x+2|+C$.
+3. $\dfrac{1}{2}\ln|2x+1|+C$.
+4. $\ln|3x-4|+C$.
+5. $5\ln|x-1|+C$.
+
+#### Silver
+
+1. $2\ln|2x+3|+C$.
+2. $\dfrac{7}{5}\ln|5x-2|+C$.
+3. $\ln2$.
+4. $\ln\left(\dfrac{7}{3}\right)$.
+5. $a=4$ and $b=-3$.
+
+#### Gold
+
+1. $\ln7$.
+2. $\ln6$.
+3. $a=4$.
+4. $\ln|x+1|+\ln|x+2|+C$.
+5. $k=2$.
+
+### Answers to Exercises 5.3
+
+#### Bronze
+
+1. $\sin x+C$.
+2. $-\cos x+C$.
+3. $\tan x+C$.
+4. $\dfrac{1}{2}\sin2x+C$.
+5. $-\dfrac{1}{3}\cos3x+C$.
+
+#### Silver
+
+1. $2\sin(2x+1)+C$.
+2. $-2\cos(3x-2)+C$.
+3. $\tan5x+C$.
+4. $1$.
+5. $1$.
+
+#### Gold
+
+1. $1$.
+2. $2$.
+3. $2$.
+4. $a=4\sqrt3$.
+5. $x=\dfrac{\pi}{4}$.
+
+### Answers to Exercises 5.4
+
+#### Bronze
+
+1. $\dfrac{x}{2}-\dfrac{1}{4}\sin2x+C$.
+2. $\dfrac{x}{2}+\dfrac{1}{4}\sin2x+C$.
+3. $\dfrac{1}{2}\sin^2x+C$.
+4. $x+\dfrac{1}{2}\sin2x+C$.
+5. $x-\dfrac{1}{2}\sin2x+C$.
+
+#### Silver
+
+1. $\dfrac{\pi}{2}$.
+2. $\dfrac{\pi}{2}$.
+3. $\dfrac{1}{2}$.
+4. $2x+\sin2x+C$.
+5. $3x-\dfrac{3}{4}\sin4x+C$.
+
+#### Gold
+
+1. $\dfrac{\pi}{8}-\dfrac{1}{4}$.
+2. $\dfrac{\pi}{8}+\dfrac{1}{4}$.
+3. $\dfrac{\pi}{2}+1$.
+4. $k=10$.
+5. $\dfrac{\pi}{16}$.
+
+### Answers to Exercises 5.5
+
+#### Bronze
+
+1. $3$.
+2. $12$.
+3. $\dfrac{7}{6}$.
+4. $\dfrac{1+e}{2}$.
+5. $\dfrac{\pi}{8}(1+\sqrt2)$.
+
+#### Silver
+
+1. $\dfrac{11}{4}$.
+2. $\dfrac{7}{6}$.
+3. $\dfrac{1+2\sqrt e+e}{4}$.
+4. $\dfrac{\pi}{4}(1+\sqrt2)$.
+5. If $h=\dfrac{b-a}{3}$, then
+   $$
+   T=\dfrac{h}{2}\left[y_0+2y_1+2y_2+y_3\right].
+   $$
+
+#### Gold
+
+1. The trapezium estimate is $\dfrac{11}{4}$. The exact value is $\dfrac{8}{3}$. The estimate is too large by $\dfrac{1}{12}$.
+2. $a=2$.
+3. On each strip, a linear function is already a straight line, so the trapezium exactly matches the area under the graph. Hence the trapezium rule is exact for linear functions.
+4. $\dfrac{1171}{1680}$.
+5. $\dfrac{\pi}{12}(2+\sqrt3)$.
+
+### Answers to STEP-style extension questions
+
+1. Since
+   $$
+   \sin^2x=\dfrac{1-\cos2x}{2},
+   $$
+   we have
+   $$
+   \int_0^\pi \sin^2x\,dx
+   =
+   \int_0^\pi \dfrac{1-\cos2x}{2}\,dx.
+   $$
+   Therefore,
+   $$
+   \int_0^\pi \sin^2x\,dx
+   =
+   \left[\dfrac{x}{2}-\dfrac{1}{4}\sin2x\right]_0^\pi
+   =
+   \dfrac{\pi}{2}.
+   $$
+
+2. Since $e^{ka}=4$,
+   $$
+   \int_0^a e^{kx}\,dx
+   =
+   \left[\dfrac{1}{k}e^{kx}\right]_0^a
+   =
+   \dfrac{4-1}{k}.
+   $$
+   This is equal to $3$, so $k=1$. Hence $e^a=4$, giving $a=\ln4$.
+
+3. Define
+   $$
+   g(a)=a-\ln(1+a).
+   $$
+   Then
+   $$
+   g'(a)=1-\dfrac{1}{1+a}=\dfrac{a}{1+a}.
+   $$
+   For $a>0$, $g'(a)>0$, and $g(0)=0$. Therefore $g(a)>0$ for $a>0$, so
+   $$
+   \ln(1+a)<a.
+   $$
+   Since
+   $$
+   \ln(1+a)=\int_0^a \dfrac{1}{1+x}\,dx,
+   $$
+   this says that the area under $y=\dfrac{1}{1+x}$ from $0$ to $a$ is less than the area of the rectangle of width $a$ and height $1$.
+
+4. We require
+   $$
+   F'(x)=6e^{2x}+12\cos3x.
+   $$
+   Since
+   $$
+   F'(x)=2Ae^{2x}+3B\cos3x,
+   $$
+   we get
+   $$
+   2A=6
+   $$
+   and
+   $$
+   3B=12.
+   $$
+   Therefore,
+   $$
+   A=3
+   \quad \text{and} \quad
+   B=4.
+   $$
+
+5. The strip width is
+   $$
+   h=\dfrac{a}{n}.
+   $$
+   The ordinates are
+   $$
+   y_i=\left(\dfrac{ia}{n}\right)^2.
+   $$
+   The trapezium estimate is
+   $$
+   T=
+   \dfrac{h}{2}
+   \left[
+   y_0+2y_1+\cdots+2y_{n-1}+y_n
+   \right].
+   $$
+   Since $y_0=0$ and $y_n=a^2$,
+   $$
+   T
+   =
+   \dfrac{a}{2n}
+   \left[
+   2\sum_{i=1}^{n-1}\left(\dfrac{ia}{n}\right)^2+a^2
+   \right].
+   $$
+   Hence
+   $$
+   T=
+   \dfrac{a^3}{2n}
+   \left[
+   \dfrac{2}{n^2}\sum_{i=1}^{n-1}i^2+1
+   \right].
+   $$
+   Using
+   $$
+   \sum_{i=1}^{n-1}i^2=\dfrac{(n-1)n(2n-1)}{6},
+   $$
+   we obtain
+   $$
+   T=\dfrac{a^3}{3}+\dfrac{a^3}{6n^2}.
+   $$
+   But
+   $$
+   \int_0^a x^2\,dx=\dfrac{a^3}{3}.
+   $$
+   Therefore the trapezium rule overestimates the exact value by
+   $$
+   \dfrac{a^3}{6n^2}.
+   $$

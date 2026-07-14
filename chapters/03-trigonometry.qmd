@@ -1,0 +1,1264 @@
+# Trigonometry
+
+```{r}
+#| label: setup-trigonometry
+#| include: false
+
+library(ggplot2)
+
+book_theme <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(size = base_size - 1),
+      panel.grid.minor = element_blank()
+    )
+}
+
+deg <- pi / 180
+
+sin_deg <- function(x) sin(x * deg)
+cos_deg <- function(x) cos(x * deg)
+tan_deg <- function(x) tan(x * deg)
+```
+
+## Overview
+
+This chapter develops five connected ideas:
+
+1. the cosecant, secant and cotangent ratios;
+2. compound angle formulae;
+3. double angle formulae;
+4. further trigonometric identities;
+5. expressing $a\sin\theta+b\cos\theta$ in the form $R\sin(\theta\pm\alpha)$ or $R\cos(\theta\pm\alpha)$.
+
+The central theme is that trigonometric expressions can often be transformed into simpler or more useful forms. These transformations are essential for solving equations, proving identities and preparing for later work in differentiation and integration.
+
+::: {.callout-note}
+The exercises are organised into tiers.
+
+**Bronze** develops fluency.  
+**Silver** develops simple application.  
+**Gold** develops exam-style reasoning.  
+The **STEP-style** section extends the chapter beyond routine A Level fluency.
+:::
+
+## 3.1 The cosecant, secant and cotangent ratios
+
+### Key mathematical ideas
+
+The three reciprocal trigonometric functions are defined by
+
+$$
+\operatorname{cosec}\theta=\dfrac{1}{\sin\theta},
+$$
+
+$$
+\sec\theta=\dfrac{1}{\cos\theta},
+$$
+
+and
+
+$$
+\cot\theta=\dfrac{1}{\tan\theta}.
+$$
+
+Since
+
+$$
+\tan\theta=\dfrac{\sin\theta}{\cos\theta},
+$$
+
+we also have
+
+$$
+\cot\theta=\dfrac{\cos\theta}{\sin\theta}.
+$$
+
+These definitions immediately show where the reciprocal functions are undefined.
+
+The function $\operatorname{cosec}\theta$ is undefined when
+
+$$
+\sin\theta=0.
+$$
+
+The function $\sec\theta$ is undefined when
+
+$$
+\cos\theta=0.
+$$
+
+The function $\cot\theta$ is undefined when
+
+$$
+\sin\theta=0.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-reciprocal-trig-functions
+#| fig-cap: "Graphs of y = cosec(theta), y = sec(theta), and y = cot(theta)."
+#| fig-width: 6
+#| fig-height: 5
+
+theta <- seq(0, 360, length.out = 3000)
+
+df <- data.frame(
+  theta = rep(theta, 3),
+  function_name = rep(c("cosec(theta)", "sec(theta)", "cot(theta)"), each = length(theta))
+)
+
+df$y <- ifelse(
+  df$function_name == "cosec(theta)",
+  1 / sin_deg(df$theta),
+  ifelse(
+    df$function_name == "sec(theta)",
+    1 / cos_deg(df$theta),
+    1 / tan_deg(df$theta)
+  )
+)
+
+df$y[abs(df$y) > 8] <- NA
+
+ggplot(df, aes(x = theta, y = y)) +
+  geom_line(linewidth = 1.0, na.rm = TRUE) +
+  facet_wrap(~ function_name, ncol = 1) +
+  geom_hline(yintercept = 0) +
+  coord_cartesian(ylim = c(-8, 8)) +
+  labs(
+    title = "Reciprocal trigonometric functions",
+    subtitle = "Large values near vertical asymptotes have been omitted for readability.",
+    x = "theta in degrees",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+The vertical asymptotes occur where the denominator of the reciprocal function is zero.
+
+### Worked example
+
+Find the exact value of
+
+$$
+\operatorname{cosec}240^\circ.
+$$
+
+Since
+
+$$
+\operatorname{cosec}\theta=\dfrac{1}{\sin\theta},
+$$
+
+we have
+
+$$
+\operatorname{cosec}240^\circ=\dfrac{1}{\sin240^\circ}.
+$$
+
+Now $240^\circ$ is in the third quadrant, where sine is negative. Its reference angle is $60^\circ$, so
+
+$$
+\sin240^\circ=-\sin60^\circ.
+$$
+
+Therefore,
+
+$$
+\sin240^\circ=-\dfrac{\sqrt3}{2}.
+$$
+
+Hence,
+
+$$
+\operatorname{cosec}240^\circ=-\dfrac{2}{\sqrt3}
+=
+-\dfrac{2\sqrt3}{3}.
+$$
+
+### Short investigation
+
+Use R to compare $\sin\theta$ and $\operatorname{cosec}\theta$.
+
+```{r}
+#| label: fig-sin-cosec-comparison
+#| fig-cap: "Comparing y = sin(theta) and y = cosec(theta)."
+#| fig-width: 6
+#| fig-height: 4
+
+theta <- seq(0, 360, length.out = 3000)
+
+df <- data.frame(
+  theta = rep(theta, 2),
+  function_name = rep(c("sin(theta)", "cosec(theta)"), each = length(theta))
+)
+
+df$y <- ifelse(
+  df$function_name == "sin(theta)",
+  sin_deg(df$theta),
+  1 / sin_deg(df$theta)
+)
+
+df$y[abs(df$y) > 6] <- NA
+
+ggplot(df, aes(x = theta, y = y, linetype = function_name)) +
+  geom_line(linewidth = 1.0, na.rm = TRUE) +
+  geom_hline(yintercept = 0) +
+  coord_cartesian(ylim = c(-6, 6)) +
+  labs(
+    title = "The reciprocal relationship",
+    subtitle = "cosec(theta) is the reciprocal of sin(theta).",
+    x = "theta in degrees",
+    y = "y",
+    linetype = "Function"
+  ) +
+  book_theme()
+```
+
+### Exercises 3.1
+
+#### Bronze
+
+1. Evaluate $\sec60^\circ$.
+2. Evaluate $\operatorname{cosec}30^\circ$.
+3. Evaluate $\cot45^\circ$.
+4. Evaluate $\sec180^\circ$.
+5. Evaluate $\operatorname{cosec}270^\circ$.
+
+#### Silver
+
+1. Solve $\sec\theta=2$ for $0^\circ\leq\theta<360^\circ$.
+2. Solve $\operatorname{cosec}\theta=2$ for $0^\circ\leq\theta<360^\circ$.
+3. Solve $\cot\theta=\sqrt3$ for $0^\circ\leq\theta<360^\circ$.
+4. Find the exact value of $\operatorname{cosec}240^\circ$.
+5. Solve $\sec\theta=-2$ for $0^\circ\leq\theta<360^\circ$.
+
+#### Gold
+
+1. Solve $2\sec^2\theta-5\sec\theta+2=0$ for $0^\circ\leq\theta<360^\circ$.
+2. Solve $3\operatorname{cosec}^2\theta-4\operatorname{cosec}\theta+1=0$ for $0^\circ\leq\theta<360^\circ$.
+3. Solve $\cot^2\theta=3$ for $0^\circ\leq\theta<360^\circ$.
+4. Prove that $\sec^2\theta-\tan^2\theta\equiv1$.
+5. Solve $\sec\theta+\tan\theta=1$ for $0^\circ\leq\theta<360^\circ$.
+
+## 3.2 Compound angle formulae
+
+### Key mathematical ideas
+
+The compound angle formulae allow us to expand trigonometric functions of sums and differences.
+
+For sine,
+
+$$
+\sin(A+B)\equiv\sin A\cos B+\cos A\sin B,
+$$
+
+and
+
+$$
+\sin(A-B)\equiv\sin A\cos B-\cos A\sin B.
+$$
+
+For cosine,
+
+$$
+\cos(A+B)\equiv\cos A\cos B-\sin A\sin B,
+$$
+
+and
+
+$$
+\cos(A-B)\equiv\cos A\cos B+\sin A\sin B.
+$$
+
+For tangent,
+
+$$
+\tan(A+B)\equiv
+\dfrac{\tan A+\tan B}{1-\tan A\tan B},
+$$
+
+and
+
+$$
+\tan(A-B)\equiv
+\dfrac{\tan A-\tan B}{1+\tan A\tan B}.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-compound-angle-check
+#| fig-cap: "Checking sin(A + B) = sin A cos B + cos A sin B numerically."
+#| fig-width: 6
+#| fig-height: 4
+
+A <- seq(0, 360, length.out = 800)
+B <- 40
+
+df <- data.frame(
+  A = A
+)
+
+df$left_side <- sin_deg(df$A + B)
+df$right_side <- sin_deg(df$A) * cos_deg(B) + cos_deg(df$A) * sin_deg(B)
+
+ggplot(df, aes(x = A)) +
+  geom_line(aes(y = left_side, linetype = "sin(A + B)"), linewidth = 1.1) +
+  geom_line(aes(y = right_side, linetype = "sin A cos B + cos A sin B"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Compound angle formula for sine",
+    subtitle = "The two graphs overlap because the expressions are identical.",
+    x = "A in degrees",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Find the exact value of
+
+$$
+\sin75^\circ.
+$$
+
+Write
+
+$$
+75^\circ=45^\circ+30^\circ.
+$$
+
+Then
+
+$$
+\sin75^\circ=\sin(45^\circ+30^\circ).
+$$
+
+Using the compound angle formula,
+
+$$
+\sin(45^\circ+30^\circ)
+=
+\sin45^\circ\cos30^\circ+\cos45^\circ\sin30^\circ.
+$$
+
+Substituting exact values,
+
+$$
+\sin75^\circ
+=
+\dfrac{\sqrt2}{2}\cdot\dfrac{\sqrt3}{2}
++
+\dfrac{\sqrt2}{2}\cdot\dfrac{1}{2}.
+$$
+
+Therefore,
+
+$$
+\sin75^\circ
+=
+\dfrac{\sqrt6+\sqrt2}{4}.
+$$
+
+### Short investigation
+
+Change the value of $B$ and observe that the two expressions remain equal.
+
+```{r}
+#| label: fig-compound-angle-investigation
+#| fig-cap: "Exploring the identity for sin(A + B)."
+#| fig-width: 6
+#| fig-height: 4
+
+B <- 65
+
+df <- data.frame(
+  A = seq(0, 360, length.out = 800)
+)
+
+df$left_side <- sin_deg(df$A + B)
+df$right_side <- sin_deg(df$A) * cos_deg(B) + cos_deg(df$A) * sin_deg(B)
+
+ggplot(df, aes(x = A)) +
+  geom_line(aes(y = left_side, linetype = "left side"), linewidth = 1.1) +
+  geom_line(aes(y = right_side, linetype = "right side"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = paste0("Checking sin(A + ", B, ")"),
+    subtitle = "Changing B does not change the identity.",
+    x = "A in degrees",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Exercises 3.2
+
+#### Bronze
+
+1. Expand $\sin(A+B)$.
+2. Expand $\cos(A-B)$.
+3. Expand $\tan(A+B)$.
+4. Find the exact value of $\sin75^\circ$.
+5. Find the exact value of $\cos75^\circ$.
+
+#### Silver
+
+1. Find the exact value of $\tan75^\circ$.
+2. Find the exact value of $\sin15^\circ$.
+3. Find the exact value of $\cos15^\circ$.
+4. Expand and simplify $\sin(x+30^\circ)$.
+5. Expand and simplify $\cos(x-60^\circ)$.
+
+#### Gold
+
+1. Solve $\sin(x+30^\circ)=\cos x$ for $0^\circ\leq x<360^\circ$.
+2. Solve $\cos(x+60^\circ)=\sin x$ for $0^\circ\leq x<360^\circ$.
+3. Solve $\tan(x+45^\circ)=3$ for $0^\circ\leq x<180^\circ$.
+4. Prove that $\cos(A+B)+\cos(A-B)\equiv2\cos A\cos B$.
+5. Given that $\sin A=\dfrac{3}{5}$, $\cos B=\dfrac{5}{13}$, and $A$ and $B$ are acute, find $\sin(A+B)$.
+
+## 3.3 Double angle formulae
+
+### Key mathematical ideas
+
+The double angle formulae are special cases of the compound angle formulae.
+
+For sine,
+
+$$
+\sin2A\equiv2\sin A\cos A.
+$$
+
+For cosine,
+
+$$
+\cos2A\equiv\cos^2A-\sin^2A.
+$$
+
+Using $\sin^2A+\cos^2A\equiv1$, this can also be written as
+
+$$
+\cos2A\equiv2\cos^2A-1,
+$$
+
+or
+
+$$
+\cos2A\equiv1-2\sin^2A.
+$$
+
+For tangent,
+
+$$
+\tan2A\equiv\dfrac{2\tan A}{1-\tan^2A}.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-double-angle-check
+#| fig-cap: "Checking sin(2A) = 2 sin(A) cos(A)."
+#| fig-width: 6
+#| fig-height: 4
+
+A <- seq(0, 360, length.out = 800)
+
+df <- data.frame(
+  A = A
+)
+
+df$left_side <- sin_deg(2 * df$A)
+df$right_side <- 2 * sin_deg(df$A) * cos_deg(df$A)
+
+ggplot(df, aes(x = A)) +
+  geom_line(aes(y = left_side, linetype = "sin(2A)"), linewidth = 1.1) +
+  geom_line(aes(y = right_side, linetype = "2 sin(A) cos(A)"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Double angle formula for sine",
+    subtitle = "The two graphs overlap because the expressions are identical.",
+    x = "A in degrees",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+If $\sin A=\dfrac{3}{5}$ and $A$ is acute, find $\sin2A$ and $\cos2A$.
+
+Since $A$ is acute,
+
+$$
+\cos A>0.
+$$
+
+Using $\sin^2A+\cos^2A=1$,
+
+$$
+\cos A=\dfrac{4}{5}.
+$$
+
+Therefore,
+
+$$
+\sin2A=2\sin A\cos A.
+$$
+
+So
+
+$$
+\sin2A=2\cdot\dfrac{3}{5}\cdot\dfrac{4}{5}=\dfrac{24}{25}.
+$$
+
+Also,
+
+$$
+\cos2A=\cos^2A-\sin^2A.
+$$
+
+Thus,
+
+$$
+\cos2A=\dfrac{16}{25}-\dfrac{9}{25}=\dfrac{7}{25}.
+$$
+
+### Short investigation
+
+Use R to compare the three forms of $\cos2A$.
+
+```{r}
+#| label: fig-cos-double-angle-forms
+#| fig-cap: "Three equivalent forms of cos(2A)."
+#| fig-width: 6
+#| fig-height: 4
+
+A <- seq(0, 360, length.out = 800)
+
+df <- data.frame(
+  A = rep(A, 3),
+  form = rep(c("cos^2(A) - sin^2(A)", "2cos^2(A) - 1", "1 - 2sin^2(A)"), each = length(A))
+)
+
+df$y <- ifelse(
+  df$form == "cos^2(A) - sin^2(A)",
+  cos_deg(df$A)^2 - sin_deg(df$A)^2,
+  ifelse(
+    df$form == "2cos^2(A) - 1",
+    2 * cos_deg(df$A)^2 - 1,
+    1 - 2 * sin_deg(df$A)^2
+  )
+)
+
+ggplot(df, aes(x = A, y = y, linetype = form)) +
+  geom_line(linewidth = 1.0) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Equivalent forms of cos(2A)",
+    subtitle = "All three formulae give the same graph.",
+    x = "A in degrees",
+    y = "value",
+    linetype = "Form"
+  ) +
+  book_theme()
+```
+
+### Exercises 3.3
+
+#### Bronze
+
+1. Write down the identity for $\sin2A$.
+2. Write down three equivalent identities for $\cos2A$.
+3. Write down the identity for $\tan2A$.
+4. Use the double angle formula to find $\sin60^\circ$ from $\sin30^\circ$ and $\cos30^\circ$.
+5. Use the double angle formula to find $\cos120^\circ$ from $\cos60^\circ$.
+
+#### Silver
+
+1. If $\sin A=\dfrac{3}{5}$ and $A$ is acute, find $\sin2A$.
+2. If $\sin A=\dfrac{3}{5}$ and $A$ is acute, find $\cos2A$.
+3. If $\tan A=2$, find $\tan2A$.
+4. Solve $\sin2x=1$ for $0^\circ\leq x\leq180^\circ$.
+5. Solve $\cos2x=0$ for $0^\circ\leq x<180^\circ$.
+
+#### Gold
+
+1. Prove that $\cos2A\equiv1-2\sin^2A$.
+2. Solve $2\sin^2x-\sin x=0$ for $0^\circ\leq x\leq360^\circ$.
+3. Solve $\cos2x=\cos x$ for $0^\circ\leq x<360^\circ$.
+4. Solve $\tan2x=1$ for $0^\circ\leq x<180^\circ$.
+5. If $\tan A=\dfrac{3}{4}$ and $A$ is acute, find $\sin2A$ and $\cos2A$.
+
+## 3.4 Further trigonometric identities
+
+### Key mathematical ideas
+
+The reciprocal functions give two important identities.
+
+Since
+
+$$
+\sec\theta=\dfrac{1}{\cos\theta},
+$$
+
+and
+
+$$
+1+\tan^2\theta\equiv\sec^2\theta,
+$$
+
+we have
+
+$$
+\sec^2\theta-\tan^2\theta\equiv1.
+$$
+
+Similarly,
+
+$$
+1+\cot^2\theta\equiv\operatorname{cosec}^2\theta,
+$$
+
+so
+
+$$
+\operatorname{cosec}^2\theta-\cot^2\theta\equiv1.
+$$
+
+Many trigonometric identities are proved by converting all expressions to sine and cosine.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-identity-sec-tan
+#| fig-cap: "Checking sec^2(theta) - tan^2(theta) = 1."
+#| fig-width: 6
+#| fig-height: 4
+
+theta <- seq(0, 360, length.out = 3000)
+
+df <- data.frame(
+  theta = theta
+)
+
+df$y <- (1 / cos_deg(df$theta))^2 - tan_deg(df$theta)^2
+df$y[abs(cos_deg(df$theta)) < 0.03] <- NA
+
+ggplot(df, aes(x = theta, y = y)) +
+  geom_line(linewidth = 1.1, na.rm = TRUE) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  coord_cartesian(ylim = c(-2, 4)) +
+  labs(
+    title = "Identity: sec^2(theta) - tan^2(theta) = 1",
+    subtitle = "Undefined points near asymptotes are omitted.",
+    x = "theta in degrees",
+    y = "value"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Prove that
+
+$$
+(\sec x+\tan x)(\sec x-\tan x)\equiv1.
+$$
+
+Using difference of two squares,
+
+$$
+(\sec x+\tan x)(\sec x-\tan x)
+=
+\sec^2x-\tan^2x.
+$$
+
+But
+
+$$
+\sec^2x-\tan^2x\equiv1.
+$$
+
+Therefore,
+
+$$
+(\sec x+\tan x)(\sec x-\tan x)\equiv1.
+$$
+
+### Short investigation
+
+Use R to test an identity numerically.
+
+```{r}
+x <- seq(1, 89, length.out = 10)
+
+data.frame(
+  x = round(x, 1),
+  left_side = round((1 + tan_deg(x)^2) * cos_deg(x)^2, 6),
+  right_side = rep(1, length(x))
+)
+```
+
+### Exercises 3.4
+
+#### Bronze
+
+1. Simplify $\sec^2x-\tan^2x$.
+2. Simplify $\operatorname{cosec}^2x-\cot^2x$.
+3. Simplify $\sin x\sec x$.
+4. Simplify $\cos x\operatorname{cosec}x$.
+5. Simplify $\tan x\cot x$.
+
+#### Silver
+
+1. Simplify $(1-\sin^2x)\sec^2x$.
+2. Simplify $\dfrac{\sec^2x-1}{\sec^2x}$.
+3. Simplify $\dfrac{\operatorname{cosec}^2x-1}{\operatorname{cosec}^2x}$.
+4. Prove that $(1+\tan^2x)\cos^2x\equiv1$.
+5. Prove that $(1+\cot^2x)\sin^2x\equiv1$.
+
+#### Gold
+
+1. Prove that $(\sec x+\tan x)(\sec x-\tan x)\equiv1$.
+2. Prove that $(\operatorname{cosec}x+\cot x)(\operatorname{cosec}x-\cot x)\equiv1$.
+3. Simplify $\dfrac{1+\sin x}{\cos x}+\dfrac{\cos x}{1+\sin x}$.
+4. Show that $\dfrac{\cos x}{1-\sin x}\equiv\sec x+\tan x$.
+5. Solve $\sec^2x=4\tan x$ for $0^\circ\leq x<180^\circ$.
+
+## 3.5 Expressing $a\sin\theta+b\cos\theta$ in the form $R\sin(\theta\pm\alpha)$ or $R\cos(\theta\pm\alpha)$
+
+### Key mathematical ideas
+
+Expressions of the form
+
+$$
+a\sin\theta+b\cos\theta
+$$
+
+can be written as a single sine or cosine function.
+
+For example,
+
+$$
+a\sin\theta+b\cos\theta
+=
+R\sin(\theta+\alpha).
+$$
+
+Expanding the right-hand side gives
+
+$$
+R\sin(\theta+\alpha)
+=
+R\sin\theta\cos\alpha+R\cos\theta\sin\alpha.
+$$
+
+Comparing coefficients,
+
+$$
+R\cos\alpha=a
+$$
+
+and
+
+$$
+R\sin\alpha=b.
+$$
+
+Therefore,
+
+$$
+R=\sqrt{a^2+b^2}
+$$
+
+and
+
+$$
+\tan\alpha=\dfrac{b}{a}.
+$$
+
+This form is useful because it makes maximum and minimum values clear.
+
+The maximum value of
+
+$$
+R\sin(\theta+\alpha)
+$$
+
+is $R$, and the minimum value is $-R$.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-rsin-form
+#| fig-cap: "Writing 3sin(theta) + 4cos(theta) as 5sin(theta + alpha)."
+#| fig-width: 6
+#| fig-height: 4
+
+theta <- seq(0, 360, length.out = 800)
+
+alpha <- atan2(4, 3) / deg
+
+df <- data.frame(
+  theta = theta
+)
+
+df$original <- 3 * sin_deg(df$theta) + 4 * cos_deg(df$theta)
+df$single_sine <- 5 * sin_deg(df$theta + alpha)
+
+ggplot(df, aes(x = theta)) +
+  geom_line(aes(y = original, linetype = "3sin(theta) + 4cos(theta)"), linewidth = 1.1) +
+  geom_line(aes(y = single_sine, linetype = "5sin(theta + alpha)"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Combining sine and cosine",
+    subtitle = paste0("Here alpha = ", round(alpha, 1), " degrees."),
+    x = "theta in degrees",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Express
+
+$$
+3\sin\theta+4\cos\theta
+$$
+
+in the form
+
+$$
+R\sin(\theta+\alpha),
+$$
+
+where $R>0$ and $0^\circ<\alpha<90^\circ$.
+
+We write
+
+$$
+3\sin\theta+4\cos\theta
+=
+R\sin(\theta+\alpha).
+$$
+
+Expanding,
+
+$$
+R\sin(\theta+\alpha)
+=
+R\sin\theta\cos\alpha+R\cos\theta\sin\alpha.
+$$
+
+Comparing coefficients gives
+
+$$
+R\cos\alpha=3
+$$
+
+and
+
+$$
+R\sin\alpha=4.
+$$
+
+Squaring and adding,
+
+$$
+R^2=3^2+4^2=25.
+$$
+
+So
+
+$$
+R=5.
+$$
+
+Also,
+
+$$
+\tan\alpha=\dfrac{4}{3}.
+$$
+
+Therefore,
+
+$$
+\alpha=\tan^{-1}\left(\dfrac{4}{3}\right).
+$$
+
+Hence,
+
+$$
+3\sin\theta+4\cos\theta
+=
+5\sin\left(\theta+\tan^{-1}\left(\dfrac{4}{3}\right)\right).
+$$
+
+### Short investigation
+
+Change the values of $a$ and $b$ below.
+
+```{r}
+#| label: fig-rsin-investigation
+#| fig-cap: "Exploring a sin(theta) + b cos(theta)."
+#| fig-width: 6
+#| fig-height: 4
+
+a <- 5
+b <- 12
+
+R <- sqrt(a^2 + b^2)
+alpha <- atan2(b, a) / deg
+
+theta <- seq(0, 360, length.out = 800)
+
+df <- data.frame(
+  theta = theta
+)
+
+df$original <- a * sin_deg(df$theta) + b * cos_deg(df$theta)
+df$single_sine <- R * sin_deg(df$theta + alpha)
+
+ggplot(df, aes(x = theta)) +
+  geom_line(aes(y = original, linetype = "original"), linewidth = 1.1) +
+  geom_line(aes(y = single_sine, linetype = "single sine"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = paste0(a, "sin(theta) + ", b, "cos(theta)"),
+    subtitle = paste0("R = ", round(R, 3), ", alpha = ", round(alpha, 2), " degrees."),
+    x = "theta in degrees",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Exercises 3.5
+
+#### Bronze
+
+1. Find $R$ for $3\sin\theta+4\cos\theta$.
+2. Express $3\sin\theta+4\cos\theta$ in the form $R\sin(\theta+\alpha)$.
+3. Find the maximum and minimum values of $5\sin(\theta+\alpha)$.
+4. Find $R$ for $5\cos\theta+12\sin\theta$.
+5. Express $\sin\theta+\cos\theta$ in the form $R\sin(\theta+\alpha)$.
+
+#### Silver
+
+1. Express $5\sin\theta+12\cos\theta$ in the form $R\sin(\theta+\alpha)$.
+2. Express $4\cos\theta-3\sin\theta$ in the form $R\cos(\theta+\alpha)$.
+3. Find the maximum and minimum values of $7\sin\theta-24\cos\theta$.
+4. Solve $3\sin\theta+4\cos\theta=5$ for $0^\circ\leq\theta<360^\circ$.
+5. Solve $\sin\theta+\cos\theta=1$ for $0^\circ\leq\theta<360^\circ$.
+
+#### Gold
+
+1. Solve $8\sin\theta+15\cos\theta=10$ for $0^\circ\leq\theta<360^\circ$, giving answers to $1$ decimal place.
+2. Find the maximum and minimum values of $6\sin\theta-8\cos\theta+3$.
+3. Solve $5\cos\theta+12\sin\theta=0$ for $0^\circ\leq\theta<360^\circ$, giving answers to $1$ decimal place.
+4. The maximum value of $a\sin\theta+b\cos\theta$ is $10$. If it can be written as $10\sin(\theta+\alpha)$ where $\tan\alpha=\dfrac{3}{4}$, find $a$ and $b$.
+5. Find the least value of $12-3\sin\theta+4\cos\theta$.
+
+## STEP-style extension questions
+
+These questions are designed to require more than routine application.
+
+### STEP-style Question 1
+
+Prove that
+
+$$
+\sin3x\equiv3\sin x-4\sin^3x.
+$$
+
+### STEP-style Question 2
+
+Solve
+
+$$
+2\cos2x+3\sin x=0
+$$
+
+for $0^\circ\leq x<360^\circ$, giving answers to $1$ decimal place.
+
+### STEP-style Question 3
+
+Find the exact maximum value of
+
+$$
+3\sin x+4\cos x+2.
+$$
+
+State the value of $x$ in the interval $0^\circ\leq x<360^\circ$ where this maximum occurs.
+
+### STEP-style Question 4
+
+Show that
+
+$$
+a\sin\theta+b\cos\theta
+$$
+
+can always be written in the form
+
+$$
+R\sin(\theta+\alpha),
+$$
+
+where
+
+$$
+R=\sqrt{a^2+b^2}.
+$$
+
+Assume $a>0$ and $b>0$.
+
+### STEP-style Question 5
+
+Solve
+
+$$
+\sin x+\sqrt3\cos x=1
+$$
+
+for $0^\circ\leq x<360^\circ$.
+
+## Reflection questions
+
+1. Why are $\operatorname{cosec}\theta$, $\sec\theta$ and $\cot\theta$ called reciprocal functions?
+2. How do reciprocal functions explain vertical asymptotes?
+3. Why is $\sin(A+B)$ not equal to $\sin A+\sin B$?
+4. How do compound angle formulae lead naturally to double angle formulae?
+5. Why is it often useful to convert an identity into sine and cosine?
+6. How does the form $R\sin(\theta+\alpha)$ make maximum and minimum values easier to find?
+7. What can R show clearly about trigonometric identities?
+8. What can exact trigonometric algebra prove that a graph can only suggest?
+
+## Answers
+
+### Answers to Exercises 3.1
+
+#### Bronze
+
+1. $2$.
+2. $2$.
+3. $1$.
+4. $-1$.
+5. $-1$.
+
+#### Silver
+
+1. $\theta=60^\circ$ or $300^\circ$.
+2. $\theta=30^\circ$ or $150^\circ$.
+3. $\theta=30^\circ$ or $210^\circ$.
+4. $-\dfrac{2\sqrt3}{3}$.
+5. $\theta=120^\circ$ or $240^\circ$.
+
+#### Gold
+
+1. $\theta=60^\circ$ or $300^\circ$.
+2. $\theta=90^\circ$.
+3. $\theta=30^\circ$, $150^\circ$, $210^\circ$ or $330^\circ$.
+4. Since $\sec^2\theta=\dfrac{1}{\cos^2\theta}$ and $\tan^2\theta=\dfrac{\sin^2\theta}{\cos^2\theta}$,
+   $$
+   \sec^2\theta-\tan^2\theta
+   =
+   \dfrac{1-\sin^2\theta}{\cos^2\theta}
+   =
+   \dfrac{\cos^2\theta}{\cos^2\theta}
+   =
+   1.
+   $$
+5. $\theta=0^\circ$.
+
+### Answers to Exercises 3.2
+
+#### Bronze
+
+1. $\sin(A+B)=\sin A\cos B+\cos A\sin B$.
+2. $\cos(A-B)=\cos A\cos B+\sin A\sin B$.
+3. $\tan(A+B)=\dfrac{\tan A+\tan B}{1-\tan A\tan B}$.
+4. $\dfrac{\sqrt6+\sqrt2}{4}$.
+5. $\dfrac{\sqrt6-\sqrt2}{4}$.
+
+#### Silver
+
+1. $2+\sqrt3$.
+2. $\dfrac{\sqrt6-\sqrt2}{4}$.
+3. $\dfrac{\sqrt6+\sqrt2}{4}$.
+4. $\dfrac{\sqrt3}{2}\sin x+\dfrac{1}{2}\cos x$.
+5. $\dfrac{1}{2}\cos x+\dfrac{\sqrt3}{2}\sin x$.
+
+#### Gold
+
+1. $x=30^\circ$ or $210^\circ$.
+2. $x=15^\circ$ or $195^\circ$.
+3. $x=26.6^\circ$.
+4. Expanding both terms,
+   $$
+   \cos(A+B)+\cos(A-B)
+   =
+   (\cos A\cos B-\sin A\sin B)+(\cos A\cos B+\sin A\sin B).
+   $$
+   Hence,
+   $$
+   \cos(A+B)+\cos(A-B)=2\cos A\cos B.
+   $$
+5. $\dfrac{63}{65}$.
+
+### Answers to Exercises 3.3
+
+#### Bronze
+
+1. $\sin2A=2\sin A\cos A$.
+2. $\cos2A=\cos^2A-\sin^2A$, $\cos2A=2\cos^2A-1$, and $\cos2A=1-2\sin^2A$.
+3. $\tan2A=\dfrac{2\tan A}{1-\tan^2A}$.
+4. $\dfrac{\sqrt3}{2}$.
+5. $-\dfrac{1}{2}$.
+
+#### Silver
+
+1. $\dfrac{24}{25}$.
+2. $\dfrac{7}{25}$.
+3. $-\dfrac{4}{3}$.
+4. $x=45^\circ$.
+5. $x=45^\circ$ or $135^\circ$.
+
+#### Gold
+
+1. Since $\cos2A=\cos^2A-\sin^2A$ and $\cos^2A=1-\sin^2A$,
+   $$
+   \cos2A=(1-\sin^2A)-\sin^2A=1-2\sin^2A.
+   $$
+2. $x=0^\circ$, $30^\circ$, $150^\circ$, $180^\circ$ or $360^\circ$.
+3. $x=0^\circ$, $120^\circ$ or $240^\circ$.
+4. $x=22.5^\circ$ or $112.5^\circ$.
+5. $\sin2A=\dfrac{24}{25}$ and $\cos2A=\dfrac{7}{25}$.
+
+### Answers to Exercises 3.4
+
+#### Bronze
+
+1. $1$.
+2. $1$.
+3. $\tan x$.
+4. $\cot x$.
+5. $1$.
+
+#### Silver
+
+1. $1$.
+2. $\sin^2x$.
+3. $\cos^2x$.
+4. Since $1+\tan^2x=\sec^2x$,
+   $$
+   (1+\tan^2x)\cos^2x=\sec^2x\cos^2x=1.
+   $$
+5. Since $1+\cot^2x=\operatorname{cosec}^2x$,
+   $$
+   (1+\cot^2x)\sin^2x=\operatorname{cosec}^2x\sin^2x=1.
+   $$
+
+#### Gold
+
+1. $\sec^2x-\tan^2x=1$.
+2. $\operatorname{cosec}^2x-\cot^2x=1$.
+3. $2\sec x$.
+4. Multiplying the numerator and denominator by $1+\sin x$ gives
+   $$
+   \dfrac{\cos x}{1-\sin x}
+   =
+   \dfrac{\cos x(1+\sin x)}{1-\sin^2x}
+   =
+   \dfrac{\cos x(1+\sin x)}{\cos^2x}
+   =
+   \dfrac{1+\sin x}{\cos x}
+   =
+   \sec x+\tan x.
+   $$
+5. $x=15^\circ$ or $75^\circ$.
+
+### Answers to Exercises 3.5
+
+#### Bronze
+
+1. $R=5$.
+2. $3\sin\theta+4\cos\theta=5\sin(\theta+\alpha)$, where $\tan\alpha=\dfrac{4}{3}$.
+3. Maximum $5$, minimum $-5$.
+4. $R=13$.
+5. $\sin\theta+\cos\theta=\sqrt2\sin(\theta+45^\circ)$.
+
+#### Silver
+
+1. $5\sin\theta+12\cos\theta=13\sin(\theta+\alpha)$, where $\tan\alpha=\dfrac{12}{5}$.
+2. $4\cos\theta-3\sin\theta=5\cos(\theta+\alpha)$, where $\tan\alpha=\dfrac{3}{4}$.
+3. Maximum $25$, minimum $-25$.
+4. $\theta=36.9^\circ$.
+5. $\theta=0^\circ$ or $90^\circ$.
+
+#### Gold
+
+1. $\theta=82.0^\circ$ or $334.1^\circ$.
+2. Maximum $13$, minimum $-7$.
+3. $\theta=157.4^\circ$ or $337.4^\circ$.
+4. $a=8$ and $b=6$.
+5. $7$.
+
+### Answers to STEP-style extension questions
+
+1. Using $\sin(2x+x)$,
+   $$
+   \sin3x=\sin2x\cos x+\cos2x\sin x.
+   $$
+   Now $\sin2x=2\sin x\cos x$ and $\cos2x=1-2\sin^2x$. Therefore,
+   $$
+   \sin3x=2\sin x\cos^2x+\sin x(1-2\sin^2x).
+   $$
+   Since $\cos^2x=1-\sin^2x$,
+   $$
+   \sin3x=2\sin x(1-\sin^2x)+\sin x(1-2\sin^2x).
+   $$
+   Hence,
+   $$
+   \sin3x=3\sin x-4\sin^3x.
+   $$
+2. $x=205.2^\circ$ or $334.8^\circ$.
+3. The maximum value is $7$. It occurs when $3\sin x+4\cos x=5$, so $x=36.9^\circ$.
+4. Expand $R\sin(\theta+\alpha)$:
+   $$
+   R\sin(\theta+\alpha)=R\sin\theta\cos\alpha+R\cos\theta\sin\alpha.
+   $$
+   Choose $R\cos\alpha=a$ and $R\sin\alpha=b$. Squaring and adding gives
+   $$
+   R^2=a^2+b^2.
+   $$
+   Hence,
+   $$
+   R=\sqrt{a^2+b^2}.
+   $$
+5. Since
+   $$
+   \sin x+\sqrt3\cos x=2\sin(x+60^\circ),
+   $$
+   the equation becomes
+   $$
+   2\sin(x+60^\circ)=1.
+   $$
+   Hence $\sin(x+60^\circ)=\dfrac{1}{2}$. Therefore $x+60^\circ=30^\circ$ or $150^\circ$ modulo $360^\circ$, giving
+   $$
+   x=90^\circ
+   $$
+   or
+   $$
+   x=330^\circ.
+   $$

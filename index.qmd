@@ -1,0 +1,18 @@
+# Preface
+
+This book is an illustrative companion for Cambridge A Level Pure Mathematics 2 & 3.
+
+The aim is to help students visualise mathematical ideas using R. The focus is not only on symbolic manipulation, but also on graphs, numerical checks, approximations, simulations and mathematical interpretation.
+
+Each chapter contains:
+
+- key mathematical ideas
+- visualisations using R
+- worked examples
+- short investigations
+- exam-style practice
+- reflection questions
+
+::: callout-note
+This is a visual and computational companion. Exact algebraic methods remain essential for written examination work.
+:::

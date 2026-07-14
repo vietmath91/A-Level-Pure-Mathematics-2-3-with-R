@@ -1,0 +1,1420 @@
+# Further algebra
+
+```{r}
+#| label: setup-further-algebra
+#| include: false
+
+library(ggplot2)
+
+book_theme <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(size = base_size - 1),
+      panel.grid.minor = element_blank()
+    )
+}
+
+general_binom <- function(power, k_value) {
+  if (k_value == 0) {
+    return(1)
+  }
+  prod(power - 0:(k_value - 1)) / factorial(k_value)
+}
+
+binomial_approx <- function(x_value, power, highest_power) {
+  total <- rep(0, length(x_value))
+  for (k_value in 0:highest_power) {
+    total <- total + general_binom(power, k_value) * x_value^k_value
+  }
+  total
+}
+```
+
+## Overview
+
+This chapter develops five connected algebraic ideas:
+
+1. improper algebraic fractions;
+2. partial fractions;
+3. binomial expansion of $(1+x)^n$ for values of $n$ that are not positive integers;
+4. binomial expansion of $(a+x)^n$ for values of $n$ that are not positive integers;
+5. using partial fractions together with binomial expansions.
+
+The central aim is to rewrite algebraic expressions into forms that are easier to expand, approximate, integrate or sum.
+
+::: {.callout-note}
+The exercises are organised into tiers.
+
+**Bronze** develops fluency.  
+**Silver** develops simple application.  
+**Gold** develops exam-style reasoning.  
+The **STEP-style** section extends the chapter beyond routine A Level fluency.
+:::
+
+## 7.1 Improper algebraic fractions
+
+### Key mathematical ideas
+
+An algebraic fraction is **proper** when
+
+$$
+\deg(\text{numerator})<\deg(\text{denominator}).
+$$
+
+It is **improper** when
+
+$$
+\deg(\text{numerator})\geq\deg(\text{denominator}).
+$$
+
+If an algebraic fraction is improper, do long division first.
+
+The division algorithm says that
+
+$$
+P(x)=D(x)Q(x)+R(x),
+$$
+
+where $Q(x)$ is the quotient and $R(x)$ is the remainder.
+
+Therefore,
+
+$$
+\dfrac{P(x)}{D(x)}
+=
+Q(x)+\dfrac{R(x)}{D(x)}.
+$$
+
+The fraction
+
+$$
+\dfrac{R(x)}{D(x)}
+$$
+
+is then proper.
+
+::: {.callout-warning}
+Before using partial fractions, always check the degrees. If the power of the top is greater than or equal to the power of the bottom, do long division first.
+:::
+
+### Visualisation using R
+
+```{r}
+#| label: fig-improper-fraction-decomposition
+#| fig-cap: "An improper algebraic fraction written as a polynomial plus a proper fraction."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-4, 4, length.out = 1000)
+)
+
+df <- subset(df, abs(x^2 + 1) > 0.05)
+
+df$original <- (2 * df$x^3 + 3 * df$x^2 - df$x + 5) / (df$x^2 + 1)
+df$decomposed <- 2 * df$x + 3 + (-3 * df$x + 2) / (df$x^2 + 1)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = original, linetype = "original fraction"), linewidth = 1.1) +
+  geom_line(aes(y = decomposed, linetype = "polynomial plus proper fraction"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "Checking an improper algebraic fraction",
+    subtitle = "The two graphs overlap because the two expressions are identical.",
+    x = "x",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Express
+
+$$
+\dfrac{2x^3+3x^2-x+5}{x^2+1}
+$$
+
+as the sum of a polynomial and a proper fraction.
+
+Since the degree of the numerator is greater than the degree of the denominator, we divide first.
+
+First,
+
+$$
+\dfrac{2x^3}{x^2}=2x.
+$$
+
+Multiply:
+
+$$
+2x(x^2+1)=2x^3+2x.
+$$
+
+Subtract:
+
+$$
+2x^3+3x^2-x+5-(2x^3+2x)=3x^2-3x+5.
+$$
+
+Next,
+
+$$
+\dfrac{3x^2}{x^2}=3.
+$$
+
+Multiply:
+
+$$
+3(x^2+1)=3x^2+3.
+$$
+
+Subtract:
+
+$$
+3x^2-3x+5-(3x^2+3)=-3x+2.
+$$
+
+Therefore,
+
+$$
+2x^3+3x^2-x+5
+=
+(x^2+1)(2x+3)+(-3x+2).
+$$
+
+Hence,
+
+$$
+\dfrac{2x^3+3x^2-x+5}{x^2+1}
+=
+2x+3+\dfrac{-3x+2}{x^2+1}.
+$$
+
+### Short investigation
+
+Change the numerator below and compare the original fraction with its decomposed form.
+
+```{r}
+#| label: fig-improper-fraction-family
+#| fig-cap: "Checking a long-division decomposition graphically."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-5, 5, length.out = 1000)
+)
+
+df <- subset(df, abs(x - 2) > 0.05)
+
+df$original <- (df$x^3 - 4 * df$x + 1) / (df$x - 2)
+df$decomposed <- df$x^2 + 2 * df$x + 1 / (df$x - 2)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = original, linetype = "original"), linewidth = 1.1) +
+  geom_line(aes(y = decomposed, linetype = "decomposed"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 2, linetype = "dashed") +
+  coord_cartesian(ylim = c(-20, 20)) +
+  labs(
+    title = "Long division check",
+    subtitle = "The vertical line marks the value excluded from the domain.",
+    x = "x",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Exercises 7.1
+
+#### Bronze
+
+1. Express $\dfrac{x^2+5x+6}{x+2}$ as a polynomial plus a proper fraction.
+2. Express $\dfrac{x^2-1}{x-1}$ as a polynomial plus a proper fraction.
+3. Express $\dfrac{x^3+2x^2+3x+4}{x+1}$ as a polynomial plus a proper fraction.
+4. Express $\dfrac{2x^3+x^2-5}{x+2}$ as a polynomial plus a proper fraction.
+5. Express $\dfrac{x^4-1}{x^2+1}$ as a polynomial plus a proper fraction.
+
+#### Silver
+
+1. Express $\dfrac{x^3-4x+1}{x-2}$ as a polynomial plus a proper fraction.
+2. Express $\dfrac{3x^3-2x^2+x-7}{x+1}$ as a polynomial plus a proper fraction.
+3. Express $\dfrac{x^4+2x^2+1}{x^2+2x+1}$ as a polynomial plus a proper fraction.
+4. Express $\dfrac{2x^4-x^3+3x^2-x+5}{x^2-1}$ as a polynomial plus a proper fraction.
+5. Express $\dfrac{x^5+x+1}{x^2+x+1}$ as a polynomial plus a proper fraction.
+
+#### Gold
+
+1. Express $\dfrac{x^3+1}{x^2+x+1}$ as a polynomial plus a proper fraction.
+2. Express $\dfrac{3x^4+2x^3-x+7}{x^2+x-1}$ as a polynomial plus a proper fraction.
+3. Explain why $\dfrac{x^3+2x+1}{x^2+1}$ must be divided before using partial fractions.
+4. Given that
+   $$
+   \dfrac{x^3+ax^2+bx+5}{x+1}
+   =
+   x^2+2x-1+\dfrac{6}{x+1},
+   $$
+   find $a$ and $b$.
+5. Show that
+   $$
+   \dfrac{x^4-1}{x^2+1}=x^2-1.
+   $$
+
+## 7.2 Partial fractions
+
+### Key mathematical ideas
+
+Partial fractions reverse the process of adding algebraic fractions.
+
+This chapter uses three main proper-fraction types.
+
+### Type 1: distinct linear factors
+
+If the denominator has distinct linear factors, use one constant numerator over each factor.
+
+For example,
+
+$$
+\dfrac{5x+1}{(x-1)(x+2)}
+=
+\dfrac{A}{x-1}+\dfrac{B}{x+2}.
+$$
+
+### Type 2: repeated linear factors
+
+If the denominator has a repeated linear factor, include each power of that factor.
+
+For example,
+
+$$
+\dfrac{3x+5}{(x-1)^2}
+=
+\dfrac{A}{x-1}+\dfrac{B}{(x-1)^2}.
+$$
+
+For a denominator such as $(x-1)^3$, we would use
+
+$$
+\dfrac{A}{x-1}+\dfrac{B}{(x-1)^2}+\dfrac{C}{(x-1)^3}.
+$$
+
+### Type 3: an irreducible quadratic factor
+
+If the denominator contains a quadratic factor that cannot be factorised over the real numbers, use a linear numerator over that quadratic.
+
+For example,
+
+$$
+\dfrac{7x-1}{(x-1)(x^2+2)}
+=
+\dfrac{A}{x-1}+\dfrac{Bx+C}{x^2+2}.
+$$
+
+### Worked example
+
+Express
+
+$$
+\dfrac{7x-1}{(x-1)(x^2+2)}
+$$
+
+in partial fractions.
+
+Write
+
+$$
+\dfrac{7x-1}{(x-1)(x^2+2)}
+=
+\dfrac{A}{x-1}+\dfrac{Bx+C}{x^2+2}.
+$$
+
+Multiplying throughout by $(x-1)(x^2+2)$ gives
+
+$$
+7x-1=A(x^2+2)+(Bx+C)(x-1).
+$$
+
+Expanding,
+
+$$
+7x-1
+=
+A x^2+2A+Bx^2-Bx+Cx-C.
+$$
+
+Collecting terms,
+
+$$
+7x-1
+=
+(A+B)x^2+(C-B)x+(2A-C).
+$$
+
+Equating coefficients gives
+
+$$
+A+B=0,
+$$
+
+$$
+C-B=7,
+$$
+
+and
+
+$$
+2A-C=-1.
+$$
+
+Solving gives
+
+$$
+A=2,\quad B=-2,\quad C=5.
+$$
+
+Therefore,
+
+$$
+\dfrac{7x-1}{(x-1)(x^2+2)}
+=
+\dfrac{2}{x-1}+\dfrac{-2x+5}{x^2+2}.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-partial-fractions-check
+#| fig-cap: "Checking a partial-fraction decomposition."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-4, 4, length.out = 1200)
+)
+
+df <- subset(df, abs(x - 1) > 0.05)
+
+df$original <- (7 * df$x - 1) / ((df$x - 1) * (df$x^2 + 2))
+df$decomposed <- 2 / (df$x - 1) + (-2 * df$x + 5) / (df$x^2 + 2)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = original, linetype = "original"), linewidth = 1.1) +
+  geom_line(aes(y = decomposed, linetype = "partial fractions"), linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  coord_cartesian(ylim = c(-12, 12)) +
+  labs(
+    title = "Partial fractions",
+    subtitle = "The two graphs overlap away from the excluded value x = 1.",
+    x = "x",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+### Short investigation
+
+Compare the three partial-fraction templates.
+
+```{r}
+#| label: tbl-partial-fraction-types
+#| echo: true
+
+data.frame(
+  type = c(
+    "distinct linear factors",
+    "repeated linear factor",
+    "irreducible quadratic factor"
+  ),
+  example_denominator = c(
+    "(x - 1)(x + 2)",
+    "(x - 1)^2",
+    "(x - 1)(x^2 + 2)"
+  ),
+  template = c(
+    "A/(x - 1) + B/(x + 2)",
+    "A/(x - 1) + B/(x - 1)^2",
+    "A/(x - 1) + (Bx + C)/(x^2 + 2)"
+  )
+)
+```
+
+### Exercises 7.2
+
+#### Bronze
+
+1. Express $\dfrac{5x+1}{(x-1)(x+2)}$ in partial fractions.
+2. Express $\dfrac{7x+1}{(x+1)(x+3)}$ in partial fractions.
+3. Express $\dfrac{3x+5}{(x-1)^2}$ in partial fractions.
+4. Express $\dfrac{4x-1}{(x+2)^2}$ in partial fractions.
+5. Express $\dfrac{7x-1}{(x-1)(x^2+2)}$ in partial fractions.
+
+#### Silver
+
+1. Express $\dfrac{2x+5}{(x-2)(x+1)}$ in partial fractions.
+2. Express $\dfrac{2x+1}{(x+2)^2}$ in partial fractions.
+3. Express $\dfrac{3x^2+x+3}{(x+1)(x^2+4)}$ in partial fractions.
+4. Express $\dfrac{1}{x(x+1)}$ in partial fractions.
+5. Express $\dfrac{x^2+5x+7}{(x+1)(x+2)}$ in partial fractions.
+
+#### Gold
+
+1. Express $\dfrac{4x+8}{(x+1)^2(x+3)}$ in partial fractions.
+2. Express $\dfrac{2x^2+4x-1}{(x-2)(x^2+1)}$ in partial fractions.
+3. Explain why $\dfrac{x^2+5x+7}{(x+1)(x+2)}$ needs long division first.
+4. Show that
+   $$
+   \dfrac{1}{r(r+1)}=\dfrac{1}{r}-\dfrac{1}{r+1}.
+   $$
+   Hence find
+   $$
+   \sum_{r=1}^{n}\dfrac{1}{r(r+1)}.
+   $$
+5. Suppose
+   $$
+   \dfrac{kx+5}{(x-1)(x+2)}
+   =
+   \dfrac{A}{x-1}+\dfrac{B}{x+2}
+   $$
+   and $A=2B$. Find $k$.
+
+## 7.3 Binomial expansion of $(1+x)^n$ for values of $n$ that are not positive integers
+
+### Key mathematical ideas
+
+For any rational number $n$,
+
+$$
+(1+x)^n
+=
+1+nx+\dfrac{n(n-1)}{2!}x^2
++
+\dfrac{n(n-1)(n-2)}{3!}x^3
++\cdots
+$$
+
+provided
+
+$$
+|x|<1.
+$$
+
+When $n$ is not a non-negative integer, the expansion does not usually terminate. The more terms we include, the better the approximation tends to be inside the interval of validity.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-binomial-approximation-one-plus-x
+#| fig-cap: "Approximating (1 + x)^n using more binomial terms."
+#| fig-width: 6
+#| fig-height: 4
+
+power <- -0.5
+
+x_values <- seq(-0.9, 0.9, length.out = 800)
+
+exact_df <- data.frame(
+  x = x_values,
+  y_exact = (1 + x_values)^power
+)
+
+approx_df <- expand.grid(
+  x = x_values,
+  highest_power = c(1, 2, 3, 4)
+)
+
+approx_df$terms_label <- paste0("up to x^", approx_df$highest_power)
+approx_df$y_value <- mapply(
+  function(x_input, highest_power_input) {
+    binomial_approx(x_input, power, highest_power_input)
+  },
+  approx_df$x,
+  approx_df$highest_power
+)
+
+ggplot() +
+  geom_line(
+    data = exact_df,
+    aes(x = x, y = y_exact, linetype = "exact"),
+    linewidth = 1.2
+  ) +
+  geom_line(
+    data = approx_df,
+    aes(x = x, y = y_value, linetype = terms_label),
+    linewidth = 0.9
+  ) +
+  coord_cartesian(ylim = c(0, 4)) +
+  labs(
+    title = "Binomial approximation for (1 + x)^n",
+    subtitle = "Here n = -0.5. Extra terms improve the approximation inside -1 < x < 1.",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Expand
+
+$$
+(1+x)^{-2}
+$$
+
+up to and including the term in $x^3$.
+
+Here,
+
+$$
+n=-2.
+$$
+
+So
+
+$$
+(1+x)^{-2}
+=
+1+(-2)x
++
+\dfrac{(-2)(-3)}{2!}x^2
++
+\dfrac{(-2)(-3)(-4)}{3!}x^3
++\cdots
+$$
+
+Therefore,
+
+$$
+(1+x)^{-2}
+=
+1-2x+3x^2-4x^3+\cdots.
+$$
+
+The expansion is valid for
+
+$$
+|x|<1.
+$$
+
+### Short investigation
+
+Use R to compare approximations for several powers.
+
+```{r}
+#| label: fig-binomial-different-powers
+#| fig-cap: "Different rational powers give different binomial approximation behaviour."
+#| fig-width: 6
+#| fig-height: 4
+
+x_values <- seq(-0.8, 0.8, length.out = 600)
+
+df <- expand.grid(
+  x = x_values,
+  power_label = c("n = 1/2", "n = -1", "n = -2")
+)
+
+df$power <- ifelse(df$power_label == "n = 1/2", 0.5, ifelse(df$power_label == "n = -1", -1, -2))
+
+df$exact <- (1 + df$x)^df$power
+df$approximation <- mapply(
+  function(x_input, power_input) {
+    binomial_approx(x_input, power_input, 3)
+  },
+  df$x,
+  df$power
+)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = exact, linetype = "exact"), linewidth = 1.1) +
+  geom_line(aes(y = approximation, linetype = "up to x^3"), linewidth = 1.1) +
+  facet_wrap(~ power_label) +
+  labs(
+    title = "Binomial approximations up to x^3",
+    subtitle = "The approximation is most reliable near x = 0.",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Exercises 7.3
+
+#### Bronze
+
+1. Expand $(1+x)^{\frac{1}{2}}$ up to and including the term in $x^2$.
+2. Expand $(1+x)^{-1}$ up to and including the term in $x^3$.
+3. Expand $(1+x)^{-2}$ up to and including the term in $x^3$.
+4. Expand $(1+x)^{\frac{3}{2}}$ up to and including the term in $x^2$.
+5. State the range of validity for the expansion of $(1+x)^n$ when $n$ is not a non-negative integer.
+
+#### Silver
+
+1. Expand $(1-2x)^{-1}$ up to and including the term in $x^3$. State the range of validity.
+2. Expand $(1+3x)^{\frac{1}{2}}$ up to and including the term in $x^3$.
+3. Expand $(1-4x)^{-\frac{1}{2}}$ up to and including the term in $x^2$.
+4. Use the binomial expansion of $(1+x)^{\frac{1}{2}}$ to estimate $\sqrt{1.04}$.
+5. Expand $(1+x)^{-\frac{1}{2}}$ up to and including the term in $x^3$.
+
+#### Gold
+
+1. Show that the coefficient of $x^3$ in $(1+x)^n$ is
+   $$
+   \dfrac{n(n-1)(n-2)}{6}.
+   $$
+2. Find the coefficient of $x^3$ in $(1-2x)^{\frac{1}{2}}$.
+3. Expand $(1+x)^{\frac{1}{3}}(1-x)^{-1}$ up to and including the term in $x^3$.
+4. Find $k$ if the coefficient of $x^2$ in $(1+kx)^{-\frac{1}{2}}$ is $6$.
+5. Find the range of validity for the expansion of $(1-2x)^{\frac{1}{2}}$ and explain why substituting $x=0.6$ is invalid.
+
+## 7.4 Binomial expansion of $(a+x)^n$ for values of $n$ that are not positive integers
+
+### Key mathematical ideas
+
+To expand
+
+$$
+(a+x)^n,
+$$
+
+factor out $a$ first:
+
+$$
+(a+x)^n
+=
+a^n\left(1+\dfrac{x}{a}\right)^n.
+$$
+
+Then apply the binomial expansion to
+
+$$
+\left(1+\dfrac{x}{a}\right)^n.
+$$
+
+The expansion is valid when
+
+$$
+\left|\dfrac{x}{a}\right|<1.
+$$
+
+Equivalently,
+
+$$
+|x|<|a|.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-binomial-approximation-a-plus-x
+#| fig-cap: "Approximating sqrt(4 + x) using binomial expansions."
+#| fig-width: 6
+#| fig-height: 4
+
+x_values <- seq(-3.5, 3.5, length.out = 800)
+
+exact_df <- data.frame(
+  x = x_values,
+  y_exact = sqrt(4 + x_values)
+)
+
+approx_df <- expand.grid(
+  x = x_values,
+  highest_power = c(1, 2, 3)
+)
+
+approx_df$terms_label <- paste0("up to x^", approx_df$highest_power)
+approx_df$y_value <- 2 * mapply(
+  function(x_input, highest_power_input) {
+    binomial_approx(x_input / 4, 0.5, highest_power_input)
+  },
+  approx_df$x,
+  approx_df$highest_power
+)
+
+ggplot() +
+  geom_line(
+    data = exact_df,
+    aes(x = x, y = y_exact, linetype = "exact"),
+    linewidth = 1.2
+  ) +
+  geom_line(
+    data = approx_df,
+    aes(x = x, y = y_value, linetype = terms_label),
+    linewidth = 0.9
+  ) +
+  labs(
+    title = "Binomial approximation for sqrt(4 + x)",
+    subtitle = "The expansion is valid for |x| < 4.",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Expand
+
+$$
+(4+x)^{\frac{1}{2}}
+$$
+
+up to and including the term in $x^3$.
+
+First write
+
+$$
+(4+x)^{\frac{1}{2}}
+=
+4^{\frac{1}{2}}\left(1+\dfrac{x}{4}\right)^{\frac{1}{2}}.
+$$
+
+So
+
+$$
+(4+x)^{\frac{1}{2}}
+=
+2\left(1+\dfrac{x}{4}\right)^{\frac{1}{2}}.
+$$
+
+Now
+
+$$
+(1+u)^{\frac{1}{2}}
+=
+1+\dfrac{1}{2}u-\dfrac{1}{8}u^2+\dfrac{1}{16}u^3+\cdots.
+$$
+
+Using
+
+$$
+u=\dfrac{x}{4},
+$$
+
+we get
+
+$$
+(4+x)^{\frac{1}{2}}
+=
+2\left[
+1+\dfrac{1}{2}\left(\dfrac{x}{4}\right)
+-\dfrac{1}{8}\left(\dfrac{x}{4}\right)^2
++\dfrac{1}{16}\left(\dfrac{x}{4}\right)^3
++\cdots
+\right].
+$$
+
+Therefore,
+
+$$
+(4+x)^{\frac{1}{2}}
+=
+2+\dfrac{x}{4}-\dfrac{x^2}{64}+\dfrac{x^3}{512}+\cdots.
+$$
+
+The expansion is valid when
+
+$$
+|x|<4.
+$$
+
+### Short investigation
+
+Use the approximation to estimate square roots near $4$.
+
+```{r}
+#| label: tbl-sqrt-four-plus-x-approximations
+#| echo: true
+
+x_values <- c(-0.5, -0.2, 0.1, 0.5)
+
+data.frame(
+  x = x_values,
+  exact = round(sqrt(4 + x_values), 8),
+  approximation_up_to_x_squared = round(2 + x_values / 4 - x_values^2 / 64, 8)
+)
+```
+
+### Exercises 7.4
+
+#### Bronze
+
+1. Expand $(2+x)^{-1}$ up to and including the term in $x^2$.
+2. Expand $(4+x)^{\frac{1}{2}}$ up to and including the term in $x^2$.
+3. Expand $(3+x)^{-1}$ up to and including the term in $x^2$.
+4. State the range of validity for the expansion of $(5+x)^{-\frac{1}{2}}$.
+5. Use the expansion of $(4+x)^{\frac{1}{2}}$ up to and including the term in $x^2$ to estimate $\sqrt{4.1}$.
+
+#### Silver
+
+1. Expand $(2-3x)^{-1}$ up to and including the term in $x^3$.
+2. Expand $(9+x)^{\frac{1}{2}}$ up to and including the term in $x^2$.
+3. Expand $(4-2x)^{-\frac{1}{2}}$ up to and including the term in $x^2$.
+4. Find the range of validity for the expansion of $(3-2x)^{-1}$.
+5. Find the coefficient of $x^3$ in the expansion of $(2+x)^{-3}$.
+
+#### Gold
+
+1. Show that
+   $$
+   (a+x)^n
+   =
+   a^n\left(1+\dfrac{x}{a}\right)^n.
+   $$
+   Hence explain why the range of validity is $|x|<|a|$.
+2. Find $k$ if the coefficient of $x^2$ in $(4+kx)^{\frac{1}{2}}$ is $-\dfrac{1}{64}$.
+3. Expand
+   $$
+   \dfrac{\sqrt{4+x}}{2-x}
+   $$
+   up to and including the term in $x^2$.
+4. Find the range of validity for the expansion of
+   $$
+   \dfrac{\sqrt{4+x}}{2-x}.
+   $$
+5. Use the expansion of $(9+x)^{\frac{1}{2}}$ up to and including the term in $x^2$ to estimate $\sqrt{9.2}$.
+
+## 7.5 Partial fractions and binomial expansions
+
+### Key mathematical ideas
+
+Partial fractions are often used before binomial expansion.
+
+For example,
+
+$$
+\dfrac{1+5x}{(1-x)(1+2x)}
+$$
+
+can be split into simpler fractions:
+
+$$
+\dfrac{1+5x}{(1-x)(1+2x)}
+=
+\dfrac{2}{1-x}-\dfrac{1}{1+2x}.
+$$
+
+Each term can then be expanded separately.
+
+The expansion
+
+$$
+\dfrac{1}{1-x}
+=
+1+x+x^2+x^3+\cdots
+$$
+
+is valid for
+
+$$
+|x|<1.
+$$
+
+The expansion
+
+$$
+\dfrac{1}{1+2x}
+=
+1-2x+4x^2-8x^3+\cdots
+$$
+
+is valid for
+
+$$
+|2x|<1.
+$$
+
+So the combined expansion is valid for
+
+$$
+|x|<\dfrac{1}{2}.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-partial-fractions-binomial-expansion
+#| fig-cap: "Exact function and binomial approximation after partial fractions."
+#| fig-width: 6
+#| fig-height: 4
+
+x_values <- seq(-0.45, 0.45, length.out = 800)
+
+df <- data.frame(
+  x = x_values
+)
+
+df$exact <- (1 + 5 * df$x) / ((1 - df$x) * (1 + 2 * df$x))
+df$approximation <- 1 + 4 * df$x - 2 * df$x^2 + 10 * df$x^3
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = exact, linetype = "exact"), linewidth = 1.1) +
+  geom_line(aes(y = approximation, linetype = "up to x^3"), linewidth = 1.1) +
+  labs(
+    title = "Partial fractions before binomial expansion",
+    subtitle = "The approximation is accurate near x = 0 and valid for |x| < 1/2.",
+    x = "x",
+    y = "value",
+    linetype = "Curve"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Obtain the expansion of
+
+$$
+\dfrac{1+5x}{(1-x)(1+2x)}
+$$
+
+in ascending powers of $x$, up to and including the term in $x^3$.
+
+First write
+
+$$
+\dfrac{1+5x}{(1-x)(1+2x)}
+=
+\dfrac{A}{1-x}+\dfrac{B}{1+2x}.
+$$
+
+Multiplying through by $(1-x)(1+2x)$ gives
+
+$$
+1+5x=A(1+2x)+B(1-x).
+$$
+
+Equating coefficients gives
+
+$$
+A+B=1
+$$
+
+and
+
+$$
+2A-B=5.
+$$
+
+Solving gives
+
+$$
+A=2,\quad B=-1.
+$$
+
+Therefore,
+
+$$
+\dfrac{1+5x}{(1-x)(1+2x)}
+=
+\dfrac{2}{1-x}-\dfrac{1}{1+2x}.
+$$
+
+Now,
+
+$$
+\dfrac{2}{1-x}
+=
+2(1+x+x^2+x^3+\cdots)
+$$
+
+and
+
+$$
+-\dfrac{1}{1+2x}
+=
+-(1-2x+4x^2-8x^3+\cdots).
+$$
+
+Therefore,
+
+$$
+\dfrac{1+5x}{(1-x)(1+2x)}
+=
+1+4x-2x^2+10x^3+\cdots.
+$$
+
+The expansion is valid when
+
+$$
+|x|<\dfrac{1}{2}.
+$$
+
+### Short investigation
+
+Compare exact and approximate values.
+
+```{r}
+#| label: tbl-partial-fractions-binomial-values
+#| echo: true
+
+x_values <- c(-0.2, -0.1, 0.1, 0.2)
+
+data.frame(
+  x = x_values,
+  exact = round((1 + 5 * x_values) / ((1 - x_values) * (1 + 2 * x_values)), 6),
+  approximation = round(1 + 4 * x_values - 2 * x_values^2 + 10 * x_values^3, 6)
+)
+```
+
+### Exercises 7.5
+
+#### Bronze
+
+1. Obtain the expansion of $\dfrac{3+x}{(1-x)(1+x)}$ up to and including the term in $x^3$.
+2. Obtain the expansion of $\dfrac{1}{(1-x)(1+2x)}$ up to and including the term in $x^3$.
+3. Obtain the expansion of $\dfrac{1+5x}{(1-x)(1+2x)}$ up to and including the term in $x^3$.
+4. State the range of validity for the expansion of $\dfrac{1+5x}{(1-x)(1+2x)}$.
+5. Obtain the expansion of $\dfrac{2+7x}{(1-x)(1+3x)}$ up to and including the term in $x^2$.
+
+#### Silver
+
+1. Obtain the expansion of $\dfrac{1+4x+x^2}{(1-x)(1+2x)}$ up to and including the term in $x^3$.
+2. Obtain the expansion of $\dfrac{5+2x}{(1-x)(1+x)^2}$ up to and including the term in $x^3$.
+3. Obtain the expansion of $\dfrac{2-5x}{(1+x)(1-3x)}$ up to and including the term in $x^3$. State the range of validity.
+4. Use the expansion of $\dfrac{1+5x}{(1-x)(1+2x)}$ to estimate its value when $x=0.1$.
+5. Find the coefficient of $x^3$ in the expansion of $\dfrac{1+5x}{(1-x)(1+2x)}$.
+
+#### Gold
+
+1. Show that
+   $$
+   \dfrac{5+2x}{(1-x)(1+x)^2}
+   =
+   \dfrac{7}{4(1-x)}
+   +\dfrac{7}{4(1+x)}
+   +\dfrac{3}{2(1+x)^2}.
+   $$
+2. Explain why long division is needed before expanding
+   $$
+   \dfrac{1+4x+x^2}{(1-x)(1+2x)}.
+   $$
+3. Find the range of validity for the expansion of
+   $$
+   \dfrac{2-5x}{(1+x)(1-3x)}.
+   $$
+4. Find $k$ if the coefficient of $x$ in the expansion of
+   $$
+   \dfrac{1+kx}{(1-x)(1+2x)}
+   $$
+   is $5$.
+5. Find the coefficient of $x^3$ in the expansion of
+   $$
+   \dfrac{1+ax}{(1-x)(1+2x)}
+   $$
+   in terms of $a$.
+
+## STEP-style extension questions
+
+These questions are designed to require proof, structure or exact reasoning.
+
+### STEP-style Question 1
+
+Let $n$ be rational. Prove that the coefficient of $x^r$ in the binomial expansion of $(1+x)^n$ is
+
+$$
+\dfrac{n(n-1)(n-2)\cdots(n-r+1)}{r!}.
+$$
+
+Use your result to find the coefficient of $x^4$ in
+
+$$
+(1-2x)^{-\frac{1}{2}}.
+$$
+
+### STEP-style Question 2
+
+Use partial fractions to prove that
+
+$$
+\sum_{r=1}^{n}\dfrac{1}{r(r+1)}
+=
+\dfrac{n}{n+1}.
+$$
+
+### STEP-style Question 3
+
+Show that
+
+$$
+\dfrac{1+x}{(1-2x)(1+x)}
+=
+\dfrac{1}{1-2x},
+$$
+
+for $x\neq -1$. Then explain why this simplification affects the apparent range of validity of a binomial expansion.
+
+### STEP-style Question 4
+
+Express
+
+$$
+\dfrac{x^3+3x^2+5x+1}{(x+1)(x^2+1)}
+$$
+
+in the form
+
+$$
+A+\dfrac{B}{x+1}+\dfrac{Cx+D}{x^2+1}.
+$$
+
+### STEP-style Question 5
+
+Let
+
+$$
+F(x)=\dfrac{1+ax}{(1-x)(1+2x)}.
+$$
+
+Find the value of $a$ such that the coefficient of $x^3$ in the expansion of $F(x)$ is zero.
+
+## Reflection questions
+
+1. Why must an improper algebraic fraction be divided before partial fractions?
+2. What are the three main partial-fraction types in this chapter?
+3. Why does an irreducible quadratic factor require a linear numerator?
+4. Why does the binomial expansion of $(1+x)^n$ have a validity condition when $n$ is not a non-negative integer?
+5. Why do extra terms improve approximation near $x=0$?
+6. Why should $(a+x)^n$ be rewritten as $a^n(1+\frac{x}{a})^n$ before expanding?
+7. Why does the final range of validity in a combined expansion come from the most restrictive condition?
+8. What can R show clearly about approximation error that algebra alone may hide?
+9. What can exact algebra prove that a graph can only suggest?
+
+## Answers
+
+### Answers to Exercises 7.1
+
+#### Bronze
+
+1. $x+3$.
+2. $x+1$.
+3. $x^2+x+2+\dfrac{2}{x+1}$.
+4. $2x^2-3x+6-\dfrac{17}{x+2}$.
+5. $x^2-1$.
+
+#### Silver
+
+1. $x^2+2x+\dfrac{1}{x-2}$.
+2. $3x^2-5x+6-\dfrac{13}{x+1}$.
+3. $x^2-2x+5+\dfrac{-8x-4}{x^2+2x+1}$.
+4. $2x^2-x+5+\dfrac{-2x+10}{x^2-1}$.
+5. $x^3-x^2+1$.
+
+#### Gold
+
+1. $x-1+\dfrac{2}{x^2+x+1}$.
+2. $3x^2-x+4+\dfrac{-6x+11}{x^2+x-1}$.
+3. The numerator has degree $3$ and the denominator has degree $2$, so the fraction is improper.
+4. $a=3$ and $b=1$.
+5. Since $x^4-1=(x^2+1)(x^2-1)$, the quotient is $x^2-1$ and the remainder is $0$.
+
+### Answers to Exercises 7.2
+
+#### Bronze
+
+1. $\dfrac{2}{x-1}+\dfrac{3}{x+2}$.
+2. $-\dfrac{3}{x+1}+\dfrac{10}{x+3}$.
+3. $\dfrac{3}{x-1}+\dfrac{8}{(x-1)^2}$.
+4. $\dfrac{4}{x+2}-\dfrac{9}{(x+2)^2}$.
+5. $\dfrac{2}{x-1}+\dfrac{-2x+5}{x^2+2}$.
+
+#### Silver
+
+1. $\dfrac{3}{x-2}-\dfrac{1}{x+1}$.
+2. $\dfrac{2}{x+2}-\dfrac{3}{(x+2)^2}$.
+3. $\dfrac{1}{x+1}+\dfrac{2x-1}{x^2+4}$.
+4. $\dfrac{1}{x}-\dfrac{1}{x+1}$.
+5. $1+\dfrac{3}{x+1}-\dfrac{1}{x+2}$.
+
+#### Gold
+
+1. $\dfrac{1}{x+1}+\dfrac{2}{(x+1)^2}-\dfrac{1}{x+3}$.
+2. $\dfrac{3}{x-2}+\dfrac{-x+2}{x^2+1}$.
+3. The numerator and denominator both have degree $2$, so the fraction is improper and long division must be done first.
+4. The identity is
+   $$
+   \dfrac{1}{r(r+1)}=\dfrac{1}{r}-\dfrac{1}{r+1}.
+   $$
+   Therefore,
+   $$
+   \sum_{r=1}^{n}\dfrac{1}{r(r+1)}
+   =
+   1-\dfrac{1}{n+1}
+   =
+   \dfrac{n}{n+1}.
+   $$
+5. $k=5$.
+
+### Answers to Exercises 7.3
+
+#### Bronze
+
+1. $1+\dfrac{1}{2}x-\dfrac{1}{8}x^2+\cdots$.
+2. $1-x+x^2-x^3+\cdots$.
+3. $1-2x+3x^2-4x^3+\cdots$.
+4. $1+\dfrac{3}{2}x+\dfrac{3}{8}x^2+\cdots$.
+5. $|x|<1$.
+
+#### Silver
+
+1. $1+2x+4x^2+8x^3+\cdots$, valid for $|x|<\dfrac{1}{2}$.
+2. $1+\dfrac{3}{2}x-\dfrac{9}{8}x^2+\dfrac{27}{16}x^3+\cdots$.
+3. $1+2x+6x^2+\cdots$.
+4. $\sqrt{1.04}\approx1.0198$.
+5. $1-\dfrac{1}{2}x+\dfrac{3}{8}x^2-\dfrac{5}{16}x^3+\cdots$.
+
+#### Gold
+
+1. The coefficient of $x^3$ is the third binomial coefficient:
+   $$
+   \dfrac{n(n-1)(n-2)}{3!}
+   =
+   \dfrac{n(n-1)(n-2)}{6}.
+   $$
+2. $-\dfrac{1}{2}$.
+3. $1+\dfrac{4}{3}x+\dfrac{11}{9}x^2+\dfrac{104}{81}x^3+\cdots$.
+4. $k=\pm4$.
+5. The range is $|x|<\dfrac{1}{2}$. Substituting $x=0.6$ is invalid because $|2x|>1$.
+
+### Answers to Exercises 7.4
+
+#### Bronze
+
+1. $\dfrac{1}{2}-\dfrac{x}{4}+\dfrac{x^2}{8}+\cdots$.
+2. $2+\dfrac{x}{4}-\dfrac{x^2}{64}+\cdots$.
+3. $\dfrac{1}{3}-\dfrac{x}{9}+\dfrac{x^2}{27}+\cdots$.
+4. $|x|<5$.
+5. $\sqrt{4.1}\approx2.02484$.
+
+#### Silver
+
+1. $\dfrac{1}{2}+\dfrac{3}{4}x+\dfrac{9}{8}x^2+\dfrac{27}{16}x^3+\cdots$.
+2. $3+\dfrac{x}{6}-\dfrac{x^2}{216}+\cdots$.
+3. $\dfrac{1}{2}+\dfrac{x}{8}+\dfrac{3x^2}{64}+\cdots$.
+4. $|x|<\dfrac{3}{2}$.
+5. $-\dfrac{5}{32}$.
+
+#### Gold
+
+1. Factorising gives
+   $$
+   (a+x)^n=a^n\left(1+\dfrac{x}{a}\right)^n.
+   $$
+   The binomial expansion requires
+   $$
+   \left|\dfrac{x}{a}\right|<1,
+   $$
+   so $|x|<|a|$.
+2. $k=\pm1$.
+3. $1+\dfrac{5}{8}x+\dfrac{39}{128}x^2+\cdots$.
+4. $|x|<2$.
+5. $\sqrt{9.2}\approx3.03315$.
+
+### Answers to Exercises 7.5
+
+#### Bronze
+
+1. $3+x+3x^2+x^3+\cdots$.
+2. $1-x+3x^2-5x^3+\cdots$.
+3. $1+4x-2x^2+10x^3+\cdots$.
+4. $|x|<\dfrac{1}{2}$.
+5. $2+3x+\cdots$.
+
+#### Silver
+
+1. $1+3x+6x^3+\cdots$.
+2. $5-3x+8x^2-6x^3+\cdots$.
+3. $2-x+4x^2+5x^3+\cdots$, valid for $|x|<\dfrac{1}{3}$.
+4. The estimate is $1.390$.
+5. $10$.
+
+#### Gold
+
+1. Multiplying the right-hand side by $(1-x)(1+x)^2$ gives $5+2x$, so the identity holds.
+2. The numerator and denominator both have degree $2$, so the fraction is improper.
+3. The conditions are $|x|<1$ and $|3x|<1$, so the range is $|x|<\dfrac{1}{3}$.
+4. $k=6$.
+5. $3a-5$.
+
+### Answers to STEP-style extension questions
+
+1. The coefficient of $x^r$ is obtained by choosing the first $r$ descending factors from $n$ and dividing by $r!$:
+   $$
+   \dfrac{n(n-1)(n-2)\cdots(n-r+1)}{r!}.
+   $$
+   For $(1-2x)^{-\frac{1}{2}}$, the coefficient of $x^4$ is
+   $$
+   \dfrac{35}{128}\cdot16=\dfrac{35}{8}.
+   $$
+
+2. Since
+   $$
+   \dfrac{1}{r(r+1)}
+   =
+   \dfrac{1}{r}-\dfrac{1}{r+1},
+   $$
+   the sum telescopes:
+   $$
+   \sum_{r=1}^{n}\dfrac{1}{r(r+1)}
+   =
+   \left(1-\dfrac{1}{2}\right)+\left(\dfrac{1}{2}-\dfrac{1}{3}\right)+\cdots+\left(\dfrac{1}{n}-\dfrac{1}{n+1}\right).
+   $$
+   Therefore,
+   $$
+   \sum_{r=1}^{n}\dfrac{1}{r(r+1)}
+   =
+   1-\dfrac{1}{n+1}
+   =
+   \dfrac{n}{n+1}.
+   $$
+
+3. For $x\neq-1$,
+   $$
+   \dfrac{1+x}{(1-2x)(1+x)}
+   =
+   \dfrac{1}{1-2x}.
+   $$
+   If the expression is simplified first, the only binomial expansion needed is
+   $$
+   \dfrac{1}{1-2x}=1+2x+4x^2+\cdots,
+   $$
+   which is valid for $|x|<\dfrac{1}{2}$. Without simplification, the factor $1+x$ may misleadingly suggest another condition, but it cancels from the function.
+
+4. Long division gives quotient $1$ and remainder $2x^2+4x$. Therefore,
+   $$
+   \dfrac{x^3+3x^2+5x+1}{(x+1)(x^2+1)}
+   =
+   1+\dfrac{2x^2+4x}{(x+1)(x^2+1)}.
+   $$
+   Now
+   $$
+   \dfrac{2x^2+4x}{(x+1)(x^2+1)}
+   =
+   -\dfrac{1}{x+1}+\dfrac{3x+1}{x^2+1}.
+   $$
+   Hence,
+   $$
+   \dfrac{x^3+3x^2+5x+1}{(x+1)(x^2+1)}
+   =
+   1-\dfrac{1}{x+1}+\dfrac{3x+1}{x^2+1}.
+   $$
+
+5. Expanding
+   $$
+   \dfrac{1+ax}{(1-x)(1+2x)}
+   $$
+   gives coefficient of $x^3$ equal to
+   $$
+   3a-5.
+   $$
+   Setting this equal to zero gives
+   $$
+   a=\dfrac{5}{3}.
+   $$

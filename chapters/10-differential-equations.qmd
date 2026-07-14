@@ -1,0 +1,2128 @@
+# Differential equations
+
+```{r}
+#| label: setup-differential-equations
+#| include: false
+
+library(ggplot2)
+
+book_theme <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(size = base_size - 1),
+      panel.grid.minor = element_blank()
+    )
+}
+
+growth_solution <- function(t, initial_value, rate) {
+  initial_value * exp(rate * t)
+}
+
+cooling_solution <- function(t, ambient, initial_value, cooling_constant) {
+  ambient + (initial_value - ambient) * exp(-cooling_constant * t)
+}
+
+logistic_solution <- function(t, capacity, initial_value, rate) {
+  capacity / (1 + ((capacity - initial_value) / initial_value) * exp(-rate * t))
+}
+
+slope_field <- function(x_min, x_max, y_min, y_max, derivative_function, n_x = 16, n_y = 12, segment_length = 0.18) {
+  grid_df <- expand.grid(
+    x = seq(x_min, x_max, length.out = n_x),
+    y = seq(y_min, y_max, length.out = n_y)
+  )
+  
+  grid_df$slope <- derivative_function(grid_df$x, grid_df$y)
+  grid_df$angle <- atan(grid_df$slope)
+  grid_df$xend <- grid_df$x + segment_length * cos(grid_df$angle)
+  grid_df$yend <- grid_df$y + segment_length * sin(grid_df$angle)
+  grid_df$xstart <- grid_df$x - segment_length * cos(grid_df$angle)
+  grid_df$ystart <- grid_df$y - segment_length * sin(grid_df$angle)
+  
+  grid_df
+}
+```
+
+## Overview
+
+This chapter develops six connected differential-equation ideas:
+
+1. forming differential equations from statements about rates of change;
+2. solving separable differential equations;
+3. using initial conditions to find particular solutions;
+4. modelling growth, decay and saturation;
+5. modelling cooling and weather-type relaxation;
+6. interpreting deterministic models in contexts such as finance and environmental data.
+
+The central technique in this chapter is **separating the variables**. We will not use integrating factors, second-order differential equations, or stochastic differential equations as solution techniques.
+
+::: {.callout-note}
+The exercises are organised into tiers.
+
+**Bronze** develops fluency.  
+**Silver** develops simple application.  
+**Gold** develops exam-style reasoning.  
+The **STEP-style** section extends the chapter beyond routine A Level fluency.
+:::
+
+::: {.callout-warning}
+Real-world data changes. The R examples in this chapter use small classroom datasets so that the book renders offline. Before using the notes for a live lesson, update the contextual values from official sources such as NIWA, Vietnam's national hydrometeorological service, the Reserve Bank of New Zealand, or a bank exchange-rate feed.
+:::
+
+## Inspiration: differential equations behind real-world data
+
+Differential equations are not just symbolic exercises. They are one of the main languages used to describe change in the real world.
+
+In this chapter, our technique is deliberately limited to **separating the variables**. However, the same basic idea sits underneath much more sophisticated models used in weather forecasting, finance, population modelling, epidemics, cooling, chemical reactions and environmental science.
+
+The guiding question is:
+
+> If we know how fast something changes, can we predict what happens next?
+
+Real applications usually begin with data. For example:
+
+- weather observations from New Zealand and Vietnam;
+- temperature, rainfall, wind and sunshine summaries;
+- exchange-rate data such as NZD/VND or USD/VND;
+- population or environmental indices;
+- school-based data such as attendance, enrolment, revision completion or assessment readiness.
+
+The full real-world models may be complicated. But in this chapter we study simplified models that still capture the same central idea: **a rate of change determines a future state**.
+
+### From real-world systems to differential equations
+
+| Context | Real-world data students can recognise | More advanced differential-equation model | Separable model used in this chapter |
+|---|---|---|---|
+| Weather forecasting | Temperature, rainfall, wind speed, pressure | Coupled nonlinear partial differential equations from fluid dynamics and thermodynamics | $\dfrac{dT}{dt}=-k(T-A)$ |
+| Cooling and heating | Tea cooling in a room, classroom temperature, outdoor/indoor comparison | Heat equation or energy-balance models | $\dfrac{dT}{dt}=-k(T-A)$ |
+| Population growth | Population index, school roll, bacteria growth | Logistic or multi-compartment systems | $\dfrac{dP}{dt}=kP\left(1-\dfrac{P}{M}\right)$ |
+| Finance | Exchange rates, investment indices, price series | Stochastic differential equations with random noise | $\dfrac{dS}{dt}=rS$ |
+| Epidemics | Number infected, recovered or susceptible | Coupled SIR-type differential equations | $\dfrac{dI}{dt}=kI$ or $\dfrac{dI}{dt}=kI(M-I)$ |
+| Environmental recovery | Pollution level, rainfall deficit, concentration decay | Transport-diffusion-reaction equations | $\dfrac{dC}{dt}=-kC$ |
+
+The important point is that our simple models are not the whole story. They are **entry points** into the same mathematical way of thinking.
+
+### Example 1: weather and climate
+
+Modern weather forecasting does not use one simple equation. A full numerical weather model may involve velocity, pressure, temperature, moisture, radiation, surface effects and the rotation of the Earth.
+
+A simplified momentum equation may contain terms such as
+
+$$
+\dfrac{D\mathbf{u}}{Dt}
++
+f\mathbf{k}\times\mathbf{u}
+=
+-\dfrac{1}{\rho}\nabla p
++
+\mathbf{g}
++
+\nu\nabla^2\mathbf{u}.
+$$
+
+This is far beyond our course. It is a partial differential equation involving vectors, pressure gradients, rotation and diffusion.
+
+But a simple classroom version might ask:
+
+> A hot surface cools towards the surrounding air temperature. How does its temperature change?
+
+That leads to the separable model
+
+$$
+\dfrac{dT}{dt}=-k(T-A),
+$$
+
+where $A$ is the ambient temperature.
+
+This simple equation already captures an important real-world behaviour: the further $T$ is from $A$, the faster it changes.
+
+### Example 2: finance and exchange rates
+
+Financial data such as NZD/VND or USD/VND exchange rates do not move smoothly. They respond to interest rates, trade, policy, news, expectations and market shocks.
+
+A more advanced stochastic model may be written as
+
+$$
+dS_t=\mu S_t\,dt+\sigma S_t\,dW_t.
+$$
+
+Here, the term
+
+$$
+\mu S_t\,dt
+$$
+
+represents the deterministic trend, while
+
+$$
+\sigma S_t\,dW_t
+$$
+
+represents random fluctuation.
+
+Stochastic differential equations are not part of this chapter. However, if we ignore the random term temporarily, we get the separable deterministic model
+
+$$
+\dfrac{dS}{dt}=\mu S.
+$$
+
+Solving this gives
+
+$$
+S=S_0e^{\mu t}.
+$$
+
+So the model in this chapter is a simplified backbone for a much more complex financial idea.
+
+### Example 3: epidemics and saturation
+
+A simple early-stage epidemic model may assume that the number of infected individuals grows at a rate proportional to the current number infected:
+
+$$
+\dfrac{dI}{dt}=kI.
+$$
+
+This gives exponential growth:
+
+$$
+I=I_0e^{kt}.
+$$
+
+But unlimited exponential growth is not realistic. In a fixed population, growth slows down as the number of susceptible people decreases.
+
+A more realistic model may involve several coupled equations, such as a susceptible-infected-recovered system. A simplified version in this chapter is logistic growth:
+
+$$
+\dfrac{dP}{dt}=kP\left(1-\dfrac{P}{M}\right).
+$$
+
+This is still separable, but it captures a better idea: growth is fast at first, then slows as the quantity approaches a maximum capacity $M$.
+
+### Visualisation using R
+
+The graph below compares three simplified model shapes. The values are scaled so that the shapes can be compared on one plot.
+
+```{r}
+#| label: fig-real-world-de-inspiration
+#| fig-cap: "Three simplified differential-equation model shapes."
+#| fig-width: 6
+#| fig-height: 4
+
+time_values <- seq(0, 12, length.out = 600)
+
+inspiration_df <- data.frame(
+  time = rep(time_values, 3),
+  context = rep(
+    c(
+      "cooling towards ambient",
+      "deterministic financial growth",
+      "logistic saturation"
+    ),
+    each = length(time_values)
+  )
+)
+
+cooling_values <- 26 + (80 - 26) * exp(-0.25 * time_values)
+finance_values <- 15000 * exp(0.04 * time_values)
+logistic_values <- 1000 / (1 + 9 * exp(-0.7 * time_values))
+
+inspiration_df$model_value <- c(
+  cooling_values,
+  finance_values,
+  logistic_values
+)
+
+inspiration_df$scaled_value <- ave(
+  inspiration_df$model_value,
+  inspiration_df$context,
+  FUN = function(values) {
+    (values - min(values)) / (max(values) - min(values))
+  }
+)
+
+ggplot(inspiration_df, aes(x = time, y = scaled_value, linetype = context)) +
+  geom_line(linewidth = 1.1) +
+  labs(
+    title = "Differential equations model different types of change",
+    subtitle = "The values are scaled so the shapes can be compared.",
+    x = "time",
+    y = "scaled model value",
+    linetype = "Context"
+  ) +
+  book_theme()
+```
+### Real-world example: using a differential equation to model an NZ bank-related share price
+
+Heartland Group Holdings Limited is listed on the NZX under the ticker HGH. Heartland describes its story as one involving specialist finance and banking products, so this gives us a useful New Zealand financial context for a differential-equations model.
+
+The NZX page for HGH gives the following delayed market data:
+
+```{r}
+#| label: tbl-hgh-real-nzx-data
+#| echo: true
+
+hgh_data <- data.frame(
+  source = "NZX delayed market data",
+  ticker = "HGH",
+  company = "Heartland Group Holdings Limited",
+  data_timestamp = "27/06/2026, 16:31 NZST",
+  current_price_nzd = 1.2050,
+  change_52_week_nzd = 0.4350,
+  change_52_week_percent = 56.49
+)
+
+hgh_data
+```
+
+This gives us two real data points for a simple classroom model.
+
+The current price is approximately
+
+$$
+S(1)=1.205.
+$$
+
+The 52-week change is approximately
+
+$$
+0.435.
+$$
+
+So the approximate price one year earlier was
+
+$$
+S(0)=1.205-0.435=0.770.
+$$
+
+We now model the share price $S$ using the separable differential equation
+
+$$
+\dfrac{dS}{dt}=rS,
+$$
+
+where $t$ is measured in years from approximately 52 weeks ago.
+
+Separating the variables gives
+
+$$
+\dfrac{1}{S}\dfrac{dS}{dt}=r.
+$$
+
+So
+
+$$
+\int \dfrac{1}{S}\,dS=\int r\,dt.
+$$
+
+Hence
+
+$$
+\ln S=rt+C.
+$$
+
+Therefore,
+
+$$
+S=S_0e^{rt}.
+$$
+
+Using the real NZX data,
+
+$$
+S(0)=0.770
+$$
+
+and
+
+$$
+S(1)=1.205.
+$$
+
+So
+
+$$
+1.205=0.770e^r.
+$$
+
+Therefore,
+
+$$
+e^r=\dfrac{1.205}{0.770}.
+$$
+
+Taking logarithms gives
+
+$$
+r=\ln\left(\dfrac{1.205}{0.770}\right).
+$$
+
+Thus
+
+$$
+r\approx0.448.
+$$
+
+The fitted differential-equation model is
+
+$$
+S(t)=0.770e^{0.448t}.
+$$
+
+::: {.callout-warning}
+This is not investment advice and not a genuine financial forecast. It is a mathematical modelling example using two real NZX data points. Real share prices are affected by earnings, interest rates, dividends, credit conditions, market sentiment, news and random shocks.
+:::
+
+### Visualisation using R: fitting the model to real NZX data
+
+```{r}
+#| label: fig-hgh-real-nzx-fit
+#| fig-cap: "A separable differential-equation model fitted to real NZX HGH data."
+#| fig-width: 6
+#| fig-height: 4
+
+price_current <- 1.2050
+change_52_week <- 0.4350
+price_one_year_ago <- price_current - change_52_week
+
+growth_rate <- log(price_current / price_one_year_ago)
+
+observed_prices <- data.frame(
+  t = c(0, 1),
+  price = c(price_one_year_ago, price_current),
+  label = c("approx. 52 weeks ago", "current NZX price")
+)
+
+fitted_curve <- data.frame(
+  t = seq(0, 1, length.out = 400)
+)
+
+fitted_curve$price <- price_one_year_ago * exp(growth_rate * fitted_curve$t)
+
+ggplot() +
+  geom_line(data = fitted_curve, aes(x = t, y = price), linewidth = 1.1) +
+  geom_point(data = observed_prices, aes(x = t, y = price), size = 3) +
+  geom_text(
+    data = observed_prices,
+    aes(x = t, y = price, label = label),
+    nudge_y = 0.05
+  ) +
+  labs(
+    title = "Fitting dS/dt = rS to real NZX HGH data",
+    subtitle = paste0("Estimated continuous annual rate r = ", round(growth_rate, 3)),
+    x = "time in years from approximately 52 weeks ago",
+    y = "share price in NZD"
+  ) +
+  book_theme()
+```
+
+### A light prediction
+
+A full one-year extrapolation would be too aggressive for a classroom model based on only two data points. Instead, we make a light 13-week projection.
+
+Since
+
+$$
+13\text{ weeks}=\dfrac{13}{52}\text{ years}=0.25\text{ years},
+$$
+
+we estimate
+
+$$
+S(1.25)=1.205e^{0.448(0.25)}.
+$$
+
+This gives
+
+$$
+S(1.25)\approx1.348.
+$$
+
+So the simple model gives a light 13-week projection of approximately
+
+$$
+\$1.35.
+$$
+
+This should be interpreted as a mathematical projection, not a financial prediction.
+
+```{r}
+#| label: tbl-hgh-light-prediction
+#| echo: true
+
+prediction_weeks <- c(4, 8, 13)
+prediction_years <- prediction_weeks / 52
+
+prediction_table <- data.frame(
+  weeks_after_current_price = prediction_weeks,
+  years_after_current_price = round(prediction_years, 3),
+  predicted_price_nzd = round(price_current * exp(growth_rate * prediction_years), 3)
+)
+
+prediction_table
+```
+
+### Visualisation using R: light prediction region
+
+```{r}
+#| label: fig-hgh-light-prediction
+#| fig-cap: "A light 13-week projection from the fitted differential-equation model."
+#| fig-width: 6
+#| fig-height: 4
+
+prediction_curve <- data.frame(
+  t = seq(0, 1.25, length.out = 600)
+)
+
+prediction_curve$price <- price_one_year_ago * exp(growth_rate * prediction_curve$t)
+prediction_curve$interval <- ifelse(
+  prediction_curve$t <= 1,
+  "observed 52-week interval",
+  "13-week projection"
+)
+
+future_point <- data.frame(
+  t = 1.25,
+  price = price_current * exp(growth_rate * 0.25),
+  label = "13-week projection"
+)
+
+ggplot() +
+  annotate(
+    "rect",
+    xmin = 1,
+    xmax = 1.25,
+    ymin = -Inf,
+    ymax = Inf,
+    alpha = 0.12
+  ) +
+  geom_line(
+    data = prediction_curve,
+    aes(x = t, y = price, linetype = interval),
+    linewidth = 1.1
+  ) +
+  geom_point(data = observed_prices, aes(x = t, y = price), size = 3) +
+  geom_point(data = future_point, aes(x = t, y = price), size = 3) +
+  geom_text(
+    data = future_point,
+    aes(x = t, y = price, label = label),
+    nudge_y = 0.05
+  ) +
+  labs(
+    title = "Light projection from dS/dt = rS",
+    subtitle = "The shaded region shows the 13-week extrapolation beyond the real NZX data.",
+    x = "time in years from approximately 52 weeks ago",
+    y = "share price in NZD",
+    linetype = "Interval"
+  ) +
+  book_theme()
+```
+
+### Scenario check
+
+Because the fitted value
+
+$$
+r\approx0.448
+$$
+
+comes from a strong 52-week movement, it is risky to assume that this rate continues. A more honest modelling approach is to compare scenarios.
+
+```{r}
+#| label: fig-hgh-real-nzx-scenario-check
+#| fig-cap: "Scenario comparison after the current NZX price."
+#| fig-width: 6
+#| fig-height: 4
+
+future_time <- seq(0, 0.25, length.out = 300)
+
+scenario_df <- expand.grid(
+  years_after_current_price = future_time,
+  scenario = c(
+    "same fitted rate",
+    "half fitted rate",
+    "zero growth",
+    "negative half fitted rate"
+  )
+)
+
+scenario_df$rate <- ifelse(
+  scenario_df$scenario == "same fitted rate",
+  growth_rate,
+  ifelse(
+    scenario_df$scenario == "half fitted rate",
+    growth_rate / 2,
+    ifelse(
+      scenario_df$scenario == "zero growth",
+      0,
+      -growth_rate / 2
+    )
+  )
+)
+
+scenario_df$predicted_price <- price_current * exp(
+  scenario_df$rate * scenario_df$years_after_current_price
+)
+
+ggplot(scenario_df, aes(x = years_after_current_price, y = predicted_price, linetype = scenario)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = price_current, linetype = "dashed") +
+  labs(
+    title = "Scenario check for a 13-week projection",
+    subtitle = "The model is sensitive to the assumed continuous rate r.",
+    x = "years after current NZX price",
+    y = "projected share price in NZD",
+    linetype = "Scenario"
+  ) +
+  book_theme()
+```
+
+### Interpretation
+
+This example follows the modelling cycle:
+
+$$
+\text{real NZX data}
+\quad\longrightarrow\quad
+\dfrac{dS}{dt}=rS
+\quad\longrightarrow\quad
+S=S_0e^{rt}
+\quad\longrightarrow\quad
+\text{fit }r
+\quad\longrightarrow\quad
+\text{make a cautious projection}.
+$$
+
+The strength of the differential equation is that the assumption is explicit:
+
+> The price changes at a rate proportional to the current price.
+
+Once that assumption is made, the mathematics forces an exponential model. The final step is not just calculation, but critique: we ask whether the assumption is reasonable.
+
+### Why we still study simple separable models
+
+A simple separable differential equation is useful because it teaches the core modelling cycle:
+
+1. identify the changing quantity;
+2. describe its rate of change;
+3. write a differential equation;
+4. separate the variables;
+5. integrate;
+6. use an initial condition;
+7. interpret the solution in context.
+
+The models in this chapter are simplified, but they are not artificial. They are the first layer of the same mathematical thinking used in larger models.
+
+For example,
+
+$$
+\dfrac{dT}{dt}=-k(T-A)
+$$
+
+is not a full weather model, but it captures relaxation towards an ambient value.
+
+Similarly,
+
+$$
+\dfrac{dS}{dt}=rS
+$$
+
+is not a full financial model, but it captures the deterministic backbone of continuous growth or decay.
+
+And
+
+$$
+\dfrac{dP}{dt}=kP\left(1-\dfrac{P}{M}\right)
+$$
+
+is not a full population or epidemic model, but it captures the idea that growth slows as a limiting capacity is approached.
+
+This chapter therefore acts as a bridge:
+
+$$
+\text{data}
+\quad\longrightarrow\quad
+\text{rate of change}
+\quad\longrightarrow\quad
+\text{differential equation}
+\quad\longrightarrow\quad
+\text{solution}
+\quad\longrightarrow\quad
+\text{interpretation}.
+$$
+
+## 10.1 Forming differential equations from rates of change
+
+### Key mathematical ideas
+
+A differential equation describes how a quantity changes.
+
+If a quantity $y$ changes with respect to $x$, then its rate of change is
+
+$$
+\dfrac{dy}{dx}.
+$$
+
+Many modelling statements translate directly into differential equations.
+
+If $y$ increases at a rate proportional to $y$, then
+
+$$
+\dfrac{dy}{dx}=ky,
+$$
+
+where $k>0$.
+
+If $y$ decreases at a rate proportional to $y$, then
+
+$$
+\dfrac{dy}{dx}=-ky,
+$$
+
+where $k>0$.
+
+If a temperature $T$ approaches an ambient temperature $A$, then a common model is
+
+$$
+\dfrac{dT}{dt}=-k(T-A),
+$$
+
+where $k>0$.
+
+This means the rate of temperature change depends on the difference between the current temperature and the ambient temperature.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-growth-slope-field
+#| fig-cap: "Slope field for dy/dx = 0.5y."
+#| fig-width: 6
+#| fig-height: 4
+
+field_df <- slope_field(
+  x_min = 0,
+  x_max = 4,
+  y_min = 0,
+  y_max = 6,
+  derivative_function = function(x_value, y_value) 0.5 * y_value
+)
+
+curve_df <- data.frame(
+  x = seq(0, 4, length.out = 400)
+)
+
+curve_df$y <- 2 * exp(0.5 * curve_df$x)
+
+ggplot() +
+  geom_segment(
+    data = field_df,
+    aes(x = xstart, y = ystart, xend = xend, yend = yend),
+    alpha = 0.55
+  ) +
+  geom_line(data = curve_df, aes(x = x, y = y), linewidth = 1.1) +
+  labs(
+    title = "A rate proportional to the current amount",
+    subtitle = "When dy/dx = 0.5y, larger y-values have steeper gradients.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+A cup of tea has temperature $T$ degrees Celsius after $t$ minutes. The surrounding air temperature is $22^\circ\text{C}$. The tea cools at a rate proportional to how much hotter it is than the surrounding air.
+
+Form a differential equation.
+
+The temperature difference is
+
+$$
+T-22.
+$$
+
+Since the tea is cooling, the rate of change is negative when $T>22$.
+
+Therefore,
+
+$$
+\dfrac{dT}{dt}=-k(T-22),
+\quad k>0.
+$$
+
+This equation also has the sensible equilibrium
+
+$$
+T=22,
+$$
+
+because when $T=22$,
+
+$$
+\dfrac{dT}{dt}=0.
+$$
+
+### Short investigation
+
+The following table translates modelling language into differential equations.
+
+```{r}
+#| label: tbl-rate-language
+#| echo: true
+
+data.frame(
+  statement = c(
+    "growth proportional to amount",
+    "decay proportional to amount",
+    "cooling towards ambient A",
+    "saturation towards capacity M",
+    "logistic growth with capacity M"
+  ),
+  differential_equation = c(
+    "dy/dt = ky",
+    "dy/dt = -ky",
+    "dT/dt = -k(T - A)",
+    "dW/dt = k(M - W)",
+    "dP/dt = kP(1 - P/M)"
+  )
+)
+```
+
+### Exercises 10.1
+
+#### Bronze
+
+1. A quantity $y$ increases at a rate proportional to $y$. Write a differential equation.
+2. A quantity $y$ decreases at a rate proportional to $y$. Write a differential equation.
+3. A population $P$ decreases at $5\%$ per hour. Write a differential equation.
+4. A speed $v$ decreases at a rate proportional to $v^2$. Write a differential equation.
+5. A water level $W$ rises towards a maximum level $M$ at a rate proportional to $M-W$. Write a differential equation.
+
+#### Silver
+
+1. A drink of temperature $T$ cools in a room of temperature $22^\circ\text{C}$. Its rate of cooling is proportional to $T-22$. Write a differential equation.
+2. A number of infected individuals $I$ grows at a rate proportional to $I(1000-I)$. Write a differential equation.
+3. A deterministic exchange-rate model assumes a value $S$ changes at a rate proportional to $S$. Write a differential equation.
+4. A rainfall deficit $D$ decreases at a rate proportional to $D$. Write a differential equation.
+5. A population satisfies $\dfrac{dN}{dt}=kN$ and has initial value $200$. Write the initial condition.
+
+#### Gold
+
+1. A cold object warms towards ambient temperature $30^\circ\text{C}$ at a rate proportional to the temperature difference. Write a differential equation.
+2. The rate of increase of $y$ with respect to $x$ is proportional to $xy$. Write a differential equation.
+3. The rate of decrease of $y$ with respect to $x$ is proportional to $\dfrac{y}{1+x}$. Write a differential equation.
+4. A population $P$ grows logistically with carrying capacity $5000$. Write a suitable differential equation.
+5. Explain why $T=A$ is an equilibrium solution of $\dfrac{dT}{dt}=-k(T-A)$.
+
+## 10.2 Solving separable differential equations
+
+### Key mathematical ideas
+
+A first-order differential equation is **separable** if it can be rearranged so that all the $y$ terms are on one side and all the $x$ terms are on the other.
+
+For example,
+
+$$
+\dfrac{dy}{dx}=xy
+$$
+
+can be rearranged as
+
+$$
+\dfrac{1}{y}\dfrac{dy}{dx}=x.
+$$
+
+This leads to
+
+$$
+\int \dfrac{1}{y}\,dy=\int x\,dx.
+$$
+
+So
+
+$$
+\ln|y|=\dfrac{x^2}{2}+C.
+$$
+
+A common final form is
+
+$$
+y=Ae^{\dfrac{x^2}{2}},
+$$
+
+where $A$ is a non-zero constant.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-solution-family-2xy
+#| fig-cap: "A family of solutions to dy/dx = 2xy."
+#| fig-width: 6
+#| fig-height: 4
+
+x_values <- seq(-2, 2, length.out = 600)
+
+solution_df <- expand.grid(
+  x = x_values,
+  initial_value = c(1, 2, 4)
+)
+
+solution_df$y <- solution_df$initial_value * exp(solution_df$x^2)
+solution_df$curve_label <- paste0("y(0) = ", solution_df$initial_value)
+
+ggplot(solution_df, aes(x = x, y = y, linetype = curve_label)) +
+  geom_line(linewidth = 1.1) +
+  coord_cartesian(ylim = c(0, 25)) +
+  labs(
+    title = "Solution family for dy/dx = 2xy",
+    subtitle = "Different initial conditions give different curves.",
+    x = "x",
+    y = "y",
+    linetype = "Initial condition"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Solve
+
+$$
+\dfrac{dy}{dx}=2xy.
+$$
+
+Separate the variables:
+
+$$
+\dfrac{1}{y}\dfrac{dy}{dx}=2x.
+$$
+
+Integrate both sides:
+
+$$
+\int \dfrac{1}{y}\,dy
+=
+\int 2x\,dx.
+$$
+
+So
+
+$$
+\ln|y|=x^2+C.
+$$
+
+Exponentiating gives
+
+$$
+|y|=e^{x^2+C}=e^C e^{x^2}.
+$$
+
+So the general solution may be written as
+
+$$
+y=Ae^{x^2},
+$$
+
+where $A$ is a constant.
+
+### Short investigation
+
+Check the solution numerically by differentiating the expression in R.
+
+```{r}
+#| label: tbl-solution-check-2xy
+#| echo: true
+
+x_values <- c(-1, 0, 1, 2)
+y_values <- 3 * exp(x_values^2)
+dy_dx_values <- 6 * x_values * exp(x_values^2)
+right_side_values <- 2 * x_values * y_values
+
+data.frame(
+  x = x_values,
+  y = round(y_values, 5),
+  derivative = round(dy_dx_values, 5),
+  right_side = round(right_side_values, 5)
+)
+```
+
+### Exercises 10.2
+
+#### Bronze
+
+1. Solve $\dfrac{dy}{dx}=3x^2$.
+2. Solve $\dfrac{dy}{dx}=2xy$.
+3. Solve $\dfrac{dy}{dx}=y$.
+4. Solve $\dfrac{dy}{dx}=\dfrac{x}{y}$.
+5. Solve $\dfrac{dy}{dx}=4xy^2$.
+
+#### Silver
+
+1. Solve $\dfrac{dy}{dx}=(x+1)y$, given that $y=2$ when $x=0$.
+2. Solve $\dfrac{dy}{dx}=\dfrac{3x}{y}$, given that $y=4$ when $x=0$.
+3. Solve $\dfrac{dy}{dx}=\dfrac{y}{1+x}$, given that $y=5$ when $x=0$.
+4. Solve $\dfrac{dy}{dx}=2x(1+y)$, given that $y=0$ when $x=0$.
+5. Solve $\dfrac{dy}{dx}=\dfrac{6x}{y+1}$, given that $y=2$ when $x=0$.
+
+#### Gold
+
+1. Solve $\dfrac{dy}{dx}=xy^2$, given that $y=1$ when $x=0$.
+2. Solve $\dfrac{dy}{dx}=y\cos x$, given that $y=3$ when $x=0$.
+3. Solve $\dfrac{dy}{dx}=\dfrac{1+x}{y}$, given that $y=1$ when $x=0$.
+4. Solve $\dfrac{dy}{dx}=e^xy^2$, given that $y=2$ when $x=0$.
+5. Solve $\dfrac{dy}{dx}=(2x+1)(y-4)$, given that $y=5$ when $x=0$.
+
+## 10.3 Particular solutions and interpretation
+
+### Key mathematical ideas
+
+A **general solution** contains an arbitrary constant.
+
+A **particular solution** uses extra information, usually an initial condition, to find that constant.
+
+For example, the general solution
+
+$$
+y=Ae^{x^2}
+$$
+
+becomes a particular solution if we know the value of $y$ at one point.
+
+If
+
+$$
+y(0)=7,
+$$
+
+then
+
+$$
+7=Ae^0=A.
+$$
+
+So the particular solution is
+
+$$
+y=7e^{x^2}.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-particular-solution-through-point
+#| fig-cap: "The solution y = 7e^(x^2) passes through (0, 7)."
+#| fig-width: 6
+#| fig-height: 4
+
+x_values <- seq(-1.5, 1.5, length.out = 600)
+
+curve_df <- data.frame(
+  x = x_values,
+  y = 7 * exp(x_values^2)
+)
+
+point_df <- data.frame(
+  x = 0,
+  y = 7,
+  label = "(0, 7)"
+)
+
+ggplot() +
+  geom_line(data = curve_df, aes(x = x, y = y), linewidth = 1.1) +
+  geom_point(data = point_df, aes(x = x, y = y), size = 3) +
+  geom_text(data = point_df, aes(x = x, y = y, label = label), nudge_y = 3) +
+  labs(
+    title = "Particular solution",
+    subtitle = "The initial condition selects one curve from the family.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Solve
+
+$$
+\dfrac{dy}{dx}=\dfrac{3y}{1+x},
+\quad y(0)=2.
+$$
+
+Separate the variables:
+
+$$
+\dfrac{1}{y}\dfrac{dy}{dx}=\dfrac{3}{1+x}.
+$$
+
+Integrate:
+
+$$
+\int \dfrac{1}{y}\,dy
+=
+\int \dfrac{3}{1+x}\,dx.
+$$
+
+So
+
+$$
+\ln|y|=3\ln|1+x|+C.
+$$
+
+For the solution through $x=0$, we work on the interval
+
+$$
+x>-1.
+$$
+
+Thus
+
+$$
+\ln|y|=\ln(1+x)^3+C.
+$$
+
+Hence
+
+$$
+y=A(1+x)^3.
+$$
+
+Using $y(0)=2$ gives
+
+$$
+2=A.
+$$
+
+Therefore,
+
+$$
+y=2(1+x)^3,
+\quad x>-1.
+$$
+
+### Short investigation
+
+Use R to compare several particular solutions.
+
+```{r}
+#| label: fig-particular-solution-family
+#| fig-cap: "Particular solutions of dy/dx = 3y/(1+x)."
+#| fig-width: 6
+#| fig-height: 4
+
+x_values <- seq(-0.9, 2, length.out = 600)
+
+solution_df <- expand.grid(
+  x = x_values,
+  initial_value = c(1, 2, 4)
+)
+
+solution_df$y <- solution_df$initial_value * (1 + solution_df$x)^3
+solution_df$curve_label <- paste0("y(0) = ", solution_df$initial_value)
+
+ggplot(solution_df, aes(x = x, y = y, linetype = curve_label)) +
+  geom_line(linewidth = 1.1) +
+  labs(
+    title = "Initial conditions change the constant",
+    subtitle = "The shape is controlled by the differential equation; the starting value selects the curve.",
+    x = "x",
+    y = "y",
+    linetype = "Initial condition"
+  ) +
+  book_theme()
+```
+
+### Exercises 10.3
+
+#### Bronze
+
+1. The general solution is $y=Ae^{2x}$. Find $A$ if $y(0)=5$.
+2. The general solution is $y=A(1+x)^3$. Find $A$ if $y(0)=4$.
+3. The general solution is $y^2=x^2+C$. Find $C$ if $y(0)=3$.
+4. The general solution is $\ln y=x+C$. Find $y$ if $y(0)=2$.
+5. The general solution is $y=Ae^{-3t}$. Find $A$ if $y(0)=80$.
+
+#### Silver
+
+1. Solve $\dfrac{dy}{dx}=4y$, given $y(0)=3$.
+2. Solve $\dfrac{dy}{dx}=xy$, given $y(0)=2$.
+3. Solve $\dfrac{dy}{dx}=\dfrac{2y}{1+x}$, given $y(0)=5$.
+4. Solve $\dfrac{dy}{dx}=\dfrac{4x}{y}$, given $y(0)=1$.
+5. Solve $\dfrac{dy}{dx}=x(y+2)$, given $y(0)=0$.
+
+#### Gold
+
+1. Solve $\dfrac{dy}{dx}=3x^2(y-1)$, given $y(0)=2$.
+2. Solve $\dfrac{dy}{dx}=\dfrac{2x+1}{y}$, given $y(0)=3$.
+3. Solve $\dfrac{dy}{dx}=y\tan x$, given $y(0)=4$.
+4. Solve $\dfrac{dy}{dx}=x(y-3)^2$, given $y(0)=4$.
+5. Find the solution of $\dfrac{dy}{dx}=ky$, $y(0)=100$, if $y(5)=200$.
+
+## 10.4 Growth, decay and saturation models
+
+### Key mathematical ideas
+
+The simplest growth model is
+
+$$
+\dfrac{dP}{dt}=kP,
+\quad k>0.
+$$
+
+Separating variables gives
+
+$$
+\dfrac{1}{P}\dfrac{dP}{dt}=k.
+$$
+
+So
+
+$$
+\ln P=kt+C,
+$$
+
+and therefore
+
+$$
+P=P_0e^{kt}.
+$$
+
+The simplest decay model is
+
+$$
+\dfrac{dP}{dt}=-kP,
+\quad k>0,
+$$
+
+with solution
+
+$$
+P=P_0e^{-kt}.
+$$
+
+Growth proportional to current amount is a useful first model, but it cannot grow forever in a restricted environment. A saturation model has the form
+
+$$
+\dfrac{dP}{dt}=kP\left(1-\dfrac{P}{M}\right),
+$$
+
+where $M$ is the carrying capacity.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-growth-decay-saturation
+#| fig-cap: "Exponential growth, exponential decay and logistic saturation."
+#| fig-width: 6
+#| fig-height: 4
+
+t_values <- seq(0, 12, length.out = 600)
+
+model_df <- data.frame(
+  t = rep(t_values, 3),
+  model = rep(c("growth", "decay", "saturation"), each = length(t_values))
+)
+
+model_df$value <- c(
+  growth_solution(t_values, initial_value = 100, rate = 0.18),
+  growth_solution(t_values, initial_value = 100, rate = -0.18),
+  logistic_solution(t_values, capacity = 1000, initial_value = 100, rate = 0.45)
+)
+
+ggplot(model_df, aes(x = t, y = value, linetype = model)) +
+  geom_line(linewidth = 1.1) +
+  labs(
+    title = "Three model shapes",
+    subtitle = "Growth, decay and saturation have distinct long-term behaviour.",
+    x = "time",
+    y = "quantity",
+    linetype = "Model"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+A quantity $P$ grows at a rate proportional to $P$. Initially,
+
+$$
+P(0)=500.
+$$
+
+After $10$ years,
+
+$$
+P(10)=700.
+$$
+
+Find a model for $P$.
+
+Since
+
+$$
+\dfrac{dP}{dt}=kP,
+$$
+
+we have
+
+$$
+P=500e^{kt}.
+$$
+
+Using $P(10)=700$ gives
+
+$$
+700=500e^{10k}.
+$$
+
+Thus
+
+$$
+e^{10k}=\dfrac{7}{5}.
+$$
+
+So
+
+$$
+10k=\ln\left(\dfrac{7}{5}\right),
+$$
+
+and
+
+$$
+k=\dfrac{1}{10}\ln\left(\dfrac{7}{5}\right).
+$$
+
+Therefore,
+
+$$
+P=500e^{\dfrac{t}{10}\ln(\dfrac{7}{5})}.
+$$
+
+Equivalently,
+
+$$
+P=500\left(\dfrac{7}{5}\right)^{t/10}.
+$$
+
+### Short investigation: NZ and Vietnam context
+
+The following small dataset is a classroom-style structure for comparing a deterministic model with updated observations. Replace the values with current official values before using the activity live.
+
+```{r}
+#| label: fig-context-growth-data
+#| fig-cap: "A deterministic curve compared with a small classroom dataset."
+#| fig-width: 6
+#| fig-height: 4
+
+context_df <- data.frame(
+  year = 0:5,
+  index_value = c(100, 106, 113, 121, 128, 137)
+)
+
+rate_estimate <- log(context_df$index_value[6] / context_df$index_value[1]) / 5
+
+curve_df <- data.frame(
+  year = seq(0, 5, length.out = 400)
+)
+
+curve_df$model <- context_df$index_value[1] * exp(rate_estimate * curve_df$year)
+
+ggplot() +
+  geom_point(data = context_df, aes(x = year, y = index_value), size = 3) +
+  geom_line(data = curve_df, aes(x = year, y = model), linewidth = 1.1) +
+  labs(
+    title = "Fitting a simple exponential model",
+    subtitle = "This structure can be reused with updated NZ, Vietnam or school data.",
+    x = "years from start",
+    y = "index"
+  ) +
+  book_theme()
+```
+
+### Exercises 10.4
+
+#### Bronze
+
+1. Solve $\dfrac{dP}{dt}=0.2P$, given $P(0)=50$.
+2. Solve $\dfrac{dP}{dt}=-0.3P$, given $P(0)=80$.
+3. A quantity satisfies $P=100e^{0.05t}$. Find $\dfrac{dP}{dt}$ in terms of $P$.
+4. A quantity satisfies $P=200e^{-0.1t}$. Find its half-life.
+5. For $\dfrac{dP}{dt}=kP$, explain the meaning of $k>0$ and $k<0$.
+
+#### Silver
+
+1. A population grows from $500$ to $700$ in $10$ years according to $\dfrac{dP}{dt}=kP$. Find $k$.
+2. A value decays from $1200$ to $900$ in $4$ years according to $\dfrac{dV}{dt}=-kV$. Find $k$.
+3. A bacteria culture satisfies $\dfrac{dN}{dt}=0.4N$, $N(0)=200$. Find $N(5)$.
+4. A pollutant level satisfies $\dfrac{dC}{dt}=-0.25C$, $C(0)=60$. Find the time when $C=10$.
+5. A quantity doubles every $8$ years. Find the exponential growth constant.
+
+#### Gold
+
+1. A quantity satisfies $\dfrac{dP}{dt}=kP$ and triples in $12$ years. Find $k$.
+2. A quantity satisfies $\dfrac{dP}{dt}=-kP$ and halves in $6$ years. Find $k$.
+3. Solve $\dfrac{dP}{dt}=0.4P\left(1-\dfrac{P}{1000}\right)$, given $P(0)=100$.
+4. For the logistic model in Question 3, find the time when $P=800$.
+5. Show that the logistic model $\dfrac{dP}{dt}=kP\left(1-\dfrac{P}{M}\right)$ has equilibrium solutions $P=0$ and $P=M$.
+
+## 10.5 Cooling and weather-type relaxation models
+
+### Key mathematical ideas
+
+Newton's law of cooling has the form
+
+$$
+\dfrac{dT}{dt}=-k(T-A),
+$$
+
+where:
+
+- $T$ is the object's temperature;
+- $A$ is the ambient temperature;
+- $k>0$ is the cooling constant.
+
+This model is separable:
+
+$$
+\dfrac{1}{T-A}\dfrac{dT}{dt}=-k.
+$$
+
+So
+
+$$
+\ln|T-A|=-kt+C.
+$$
+
+Therefore,
+
+$$
+T=A+Ce^{-kt}.
+$$
+
+If $T(0)=T_0$, then
+
+$$
+T=A+(T_0-A)e^{-kt}.
+$$
+
+This form also models many **relaxation** processes: a quantity moves gradually towards a long-term level.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-cooling-towards-ambient
+#| fig-cap: "Cooling towards ambient temperature."
+#| fig-width: 6
+#| fig-height: 4
+
+time_values <- seq(0, 40, length.out = 600)
+
+cooling_df <- data.frame(
+  time = time_values,
+  temperature = cooling_solution(
+    time_values,
+    ambient = 26,
+    initial_value = 80,
+    cooling_constant = log(9 / 4) / 10
+  )
+)
+
+ggplot(cooling_df, aes(x = time, y = temperature)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 26, linetype = "dashed") +
+  labs(
+    title = "Newton cooling model",
+    subtitle = "The temperature approaches the ambient level without crossing it.",
+    x = "time in minutes",
+    y = "temperature in degrees Celsius"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+A hot drink is placed in a room at temperature
+
+$$
+26^\circ\text{C}.
+$$
+
+Initially, the drink is at
+
+$$
+80^\circ\text{C}.
+$$
+
+After $10$ minutes, its temperature is
+
+$$
+50^\circ\text{C}.
+$$
+
+Assume
+
+$$
+\dfrac{dT}{dt}=-k(T-26).
+$$
+
+Find $T$ in terms of $t$.
+
+The general solution is
+
+$$
+T=26+Ce^{-kt}.
+$$
+
+Using $T(0)=80$ gives
+
+$$
+80=26+C,
+$$
+
+so
+
+$$
+C=54.
+$$
+
+Thus
+
+$$
+T=26+54e^{-kt}.
+$$
+
+Using $T(10)=50$ gives
+
+$$
+50=26+54e^{-10k}.
+$$
+
+So
+
+$$
+24=54e^{-10k},
+$$
+
+and
+
+$$
+e^{-10k}=\dfrac{4}{9}.
+$$
+
+Taking logarithms,
+
+$$
+-10k=\ln\left(\dfrac{4}{9}\right).
+$$
+
+Hence
+
+$$
+k=\dfrac{1}{10}\ln\left(\dfrac{9}{4}\right).
+$$
+
+Therefore,
+
+$$
+T=26+54e^{-\dfrac{t}{10}\ln(\dfrac{9}{4})}.
+$$
+
+### Short investigation: comparing ambient settings
+
+The same drink cools differently in different ambient conditions.
+
+```{r}
+#| label: fig-nz-vietnam-ambient-comparison
+#| fig-cap: "Cooling curves under two illustrative ambient temperatures."
+#| fig-width: 6
+#| fig-height: 4
+
+time_values <- seq(0, 45, length.out = 600)
+
+ambient_df <- expand.grid(
+  time = time_values,
+  place = c("cooler ambient", "warmer ambient")
+)
+
+ambient_df$ambient <- ifelse(ambient_df$place == "cooler ambient", 16, 30)
+ambient_df$temperature <- cooling_solution(
+  ambient_df$time,
+  ambient = ambient_df$ambient,
+  initial_value = 80,
+  cooling_constant = 0.08
+)
+
+ggplot(ambient_df, aes(x = time, y = temperature, linetype = place)) +
+  geom_line(linewidth = 1.1) +
+  labs(
+    title = "Same cooling constant, different ambient temperatures",
+    subtitle = "This is a useful classroom link to weather data from NZ and Vietnam.",
+    x = "time in minutes",
+    y = "temperature in degrees Celsius",
+    linetype = "Context"
+  ) +
+  book_theme()
+```
+
+### Exercises 10.5
+
+#### Bronze
+
+1. Solve $\dfrac{dT}{dt}=-0.2(T-20)$, given $T(0)=80$.
+2. Solve $\dfrac{dT}{dt}=-k(T-25)$, given $T(0)=70$.
+3. A cooling model is $T=22+58e^{-0.1t}$. Find $T(0)$.
+4. A cooling model is $T=20+60e^{-0.05t}$. What is the long-term temperature?
+5. Explain why $T=A$ is a constant solution of $\dfrac{dT}{dt}=-k(T-A)$.
+
+#### Silver
+
+1. A drink cools in a room at $20^\circ\text{C}$. Initially $T=90$. After $5$ minutes, $T=60$. Find $k$.
+2. For Question 1, find the time when $T=30$.
+3. Solve $\dfrac{dT}{dt}=-0.1(T-18)$, given $T(0)=28$.
+4. A temperature warms towards $30^\circ\text{C}$ according to $\dfrac{dT}{dt}=0.2(30-T)$, with $T(0)=10$. Find $T(t)$.
+5. A weather-index model satisfies $\dfrac{dW}{dt}=-0.3(W-100)$, $W(0)=70$. Find $W(t)$.
+
+#### Gold
+
+1. A hot drink cools in ambient temperature $26^\circ\text{C}$. Initially $T=80$, and after $10$ minutes $T=50$. Find $T(t)$.
+2. For Question 1, find the time when $T=30$.
+3. A cold object warms towards $32^\circ\text{C}$. Initially it is $12^\circ\text{C}$ and after $5$ minutes it is $22^\circ\text{C}$. Find the model.
+4. Show that if $T=A+(T_0-A)e^{-kt}$, then it satisfies $\dfrac{dT}{dt}=-k(T-A)$.
+5. In the model $T=A+Ce^{-kt}$ with $k>0$, explain why the curve approaches $A$ but never reaches it in finite time unless $C=0$.
+
+## 10.6 Deterministic finance models and stochastic context
+
+### Key mathematical ideas
+
+A simple deterministic finance model assumes a value $S$ changes at a rate proportional to itself:
+
+$$
+\dfrac{dS}{dt}=rS.
+$$
+
+Separating variables gives
+
+$$
+\dfrac{1}{S}\dfrac{dS}{dt}=r.
+$$
+
+Thus
+
+$$
+\ln S=rt+C,
+$$
+
+and
+
+$$
+S=S_0e^{rt}.
+$$
+
+This is the deterministic backbone behind many compound-growth models.
+
+Real financial data are not smooth. Exchange rates, asset prices and interest-rate-sensitive values include random shocks. A stochastic model may add a random component, but stochastic differential equations are beyond this chapter.
+
+In this chapter, we use only the deterministic separable model.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-deterministic-finance-vs-noisy-paths
+#| fig-cap: "A deterministic exponential curve with simulated noisy paths."
+#| fig-width: 6
+#| fig-height: 4
+
+set.seed(9709)
+
+time_values <- seq(0, 1, length.out = 252)
+initial_rate <- 15000
+annual_drift <- 0.02
+annual_volatility <- 0.08
+
+deterministic_df <- data.frame(
+  time = time_values,
+  rate_value = growth_solution(time_values, initial_rate, annual_drift),
+  path = "deterministic"
+)
+
+simulated_paths <- do.call(
+  rbind,
+  lapply(1:6, function(path_id) {
+    random_steps <- rnorm(length(time_values) - 1, mean = 0, sd = sqrt(1 / 252))
+    log_values <- numeric(length(time_values))
+    log_values[1] <- log(initial_rate)
+    
+    for (i in 2:length(time_values)) {
+      log_values[i] <- log_values[i - 1] +
+        (annual_drift - 0.5 * annual_volatility^2) / 252 +
+        annual_volatility * random_steps[i - 1]
+    }
+    
+    data.frame(
+      time = time_values,
+      rate_value = exp(log_values),
+      path = paste0("simulated path ", path_id)
+    )
+  })
+)
+
+ggplot() +
+  geom_line(
+    data = simulated_paths,
+    aes(x = time, y = rate_value, group = path),
+    alpha = 0.35
+  ) +
+  geom_line(
+    data = deterministic_df,
+    aes(x = time, y = rate_value),
+    linewidth = 1.2
+  ) +
+  labs(
+    title = "Deterministic model and stochastic-looking variation",
+    subtitle = "Only the smooth deterministic model is solved in this chapter.",
+    x = "time in years",
+    y = "index value"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+A deterministic exchange-rate index $S$ satisfies
+
+$$
+\dfrac{dS}{dt}=0.02S,
+$$
+
+where $t$ is measured in years.
+
+Suppose
+
+$$
+S(0)=15000.
+$$
+
+Find $S(t)$ and estimate $S(0.5)$.
+
+Since
+
+$$
+\dfrac{dS}{dt}=0.02S,
+$$
+
+we have
+
+$$
+S=15000e^{0.02t}.
+$$
+
+At $t=0.5$,
+
+$$
+S(0.5)=15000e^{0.01}.
+$$
+
+Thus
+
+$$
+S(0.5)\approx15150.75.
+$$
+
+This is not a forecast. It is a simple deterministic model for practising separable differential equations.
+
+### Short investigation
+
+Use the deterministic formula to compare different annual rates.
+
+```{r}
+#| label: tbl-deterministic-finance-values
+#| echo: true
+
+rates <- c(-0.03, 0, 0.02, 0.05)
+
+data.frame(
+  annual_rate = rates,
+  value_after_half_year = round(15000 * exp(rates * 0.5), 2),
+  value_after_one_year = round(15000 * exp(rates), 2)
+)
+```
+
+### Exercises 10.6
+
+#### Bronze
+
+1. Solve $\dfrac{dS}{dt}=0.04S$, given $S(0)=1000$.
+2. Solve $\dfrac{dS}{dt}=-0.02S$, given $S(0)=5000$.
+3. If $S=15000e^{0.02t}$, find $S(1)$.
+4. If $S=100e^{-0.1t}$, find the percentage rate of continuous decrease.
+5. Explain why $S=S_0e^{rt}$ is deterministic.
+
+#### Silver
+
+1. A value grows continuously at $3\%$ per year from $2000$. Find its value after $5$ years.
+2. A value decreases continuously at $4\%$ per year from $8000$. Find its value after $2$ years.
+3. A value changes from $15000$ to $15150.75$ in half a year under $\dfrac{dS}{dt}=rS$. Find $r$.
+4. Find the time for $S=1000e^{0.06t}$ to reach $1500$.
+5. Find the time for $S=2000e^{-0.08t}$ to fall to $1200$.
+
+#### Gold
+
+1. A deterministic index satisfies $\dfrac{dS}{dt}=rS$, $S(0)=S_0$. Prove that $S=S_0e^{rt}$.
+2. A value doubles in $3$ years under continuous growth. Find $r$.
+3. A value loses $20\%$ in $4$ years under continuous decay. Find the decay constant $k$.
+4. Explain why a deterministic exponential model may be a poor forecast for daily exchange rates.
+5. A model satisfies $\dfrac{dS}{dt}=rS$ and $S(1)=18000$, $S(3)=22000$. Find $r$ and $S(0)$.
+
+## STEP-style extension questions
+
+These questions are designed to require proof, structure or exact reasoning.
+
+### STEP-style Question 1
+
+Solve
+
+$$
+\dfrac{dy}{dx}=xy,
+\quad y(0)=2.
+$$
+
+Then show directly by differentiation that your answer satisfies the differential equation.
+
+### STEP-style Question 2
+
+Solve
+
+$$
+\dfrac{dy}{dx}=x(y-1)^2,
+\quad y(0)=2.
+$$
+
+State the largest interval containing $0$ on which your solution is defined.
+
+### STEP-style Question 3
+
+A quantity $P$ satisfies the logistic differential equation
+
+$$
+\dfrac{dP}{dt}=kP\left(1-\dfrac{P}{M}\right),
+$$
+
+where $k>0$ and $M>0$.
+
+Show that the general solution may be written as
+
+$$
+P=\dfrac{M}{1+Ae^{-kt}}.
+$$
+
+### STEP-style Question 4
+
+A hot object cools according to
+
+$$
+\dfrac{dT}{dt}=-k(T-A).
+$$
+
+Given $T(0)=T_0$, prove that
+
+$$
+T=A+(T_0-A)e^{-kt}.
+$$
+
+Then explain why the model predicts approach to ambient temperature rather than reaching it in finite time.
+
+### STEP-style Question 5
+
+A deterministic financial index satisfies
+
+$$
+\dfrac{dS}{dt}=rS.
+$$
+
+Suppose $S(1)=18000$ and $S(3)=22000$.
+
+Find $r$ and $S(0)$ exactly in logarithmic form.
+
+## Reflection questions
+
+1. What does a differential equation describe?
+2. What does it mean to separate the variables?
+3. Why do we usually need an initial condition?
+4. Why can the same general solution represent infinitely many curves?
+5. Why does $\dfrac{dP}{dt}=kP$ lead to exponential growth?
+6. Why does $\dfrac{dT}{dt}=-k(T-A)$ approach an ambient value?
+7. Why is a logistic model more realistic than unlimited exponential growth in some contexts?
+8. Why is stochastic finance beyond the technique of this chapter?
+9. What can R show clearly about solution families that algebra alone may hide?
+10. What can exact separation of variables prove that a graph can only suggest?
+
+## Answers
+
+### Answers to Exercises 10.1
+
+#### Bronze
+
+1. $\dfrac{dy}{dt}=ky$, where $k>0$.
+2. $\dfrac{dy}{dt}=-ky$, where $k>0$.
+3. $\dfrac{dP}{dt}=-0.05P$.
+4. $\dfrac{dv}{dt}=-kv^2$, where $k>0$.
+5. $\dfrac{dW}{dt}=k(M-W)$, where $k>0$.
+
+#### Silver
+
+1. $\dfrac{dT}{dt}=-k(T-22)$, where $k>0$.
+2. $\dfrac{dI}{dt}=kI(1000-I)$, where $k>0$.
+3. $\dfrac{dS}{dt}=rS$.
+4. $\dfrac{dD}{dt}=-kD$, where $k>0$.
+5. $N(0)=200$.
+
+#### Gold
+
+1. $\dfrac{dT}{dt}=k(30-T)$, where $k>0$.
+2. $\dfrac{dy}{dx}=kxy$, where $k>0$.
+3. $\dfrac{dy}{dx}=-\dfrac{ky}{1+x}$, where $k>0$.
+4. For example, $\dfrac{dP}{dt}=kP\left(1-\dfrac{P}{5000}\right)$.
+5. If $T=A$, then $T-A=0$, so $\dfrac{dT}{dt}=0$. Therefore $T=A$ is an equilibrium solution.
+
+### Answers to Exercises 10.2
+
+#### Bronze
+
+1. $y=x^3+C$.
+2. $y=Ae^{x^2}$.
+3. $y=Ae^x$.
+4. $y^2=x^2+C$.
+5. $y=\dfrac{1}{C-2x^2}$.
+
+#### Silver
+
+1. $y=2e^{\dfrac{x^2}{2}+x}$.
+2. $y^2=3x^2+16$.
+3. $y=5(1+x)$, on the interval $x>-1$.
+4. $y=e^{x^2}-1$.
+5. $y=-1+\sqrt{6x^2+9}$.
+
+#### Gold
+
+1. $y=\dfrac{1}{1-\dfrac{x^2}{2}}$.
+2. $y=3e^{\sin x}$.
+3. $y=x+1$ on the interval $x>-1$.
+4. $y=\dfrac{2}{3-2e^x}$.
+5. $y=4+e^{x^2+x}$.
+
+### Answers to Exercises 10.3
+
+#### Bronze
+
+1. $A=5$.
+2. $A=4$.
+3. $C=9$.
+4. $y=2e^x$.
+5. $A=80$.
+
+#### Silver
+
+1. $y=3e^{4x}$.
+2. $y=2e^{\dfrac{x^2}{2}}$.
+3. $y=5(1+x)^2$, on the interval $x>-1$.
+4. $y=\sqrt{4x^2+1}$ near $x=0$.
+5. $y=2e^{\dfrac{x^2}{2}}-2$.
+
+#### Gold
+
+1. $y=1+e^{x^3}$.
+2. $y=\sqrt{2x^2+2x+9}$ near $x=0$.
+3. $y=4\sec x$ on an interval containing $0$.
+4. $y=3+\dfrac{1}{1-\dfrac{x^2}{2}}$.
+5. $k=\dfrac{1}{5}\ln2$, so $y=100e^{\dfrac{x}{5}\ln2}$.
+
+### Answers to Exercises 10.4
+
+#### Bronze
+
+1. $P=50e^{0.2t}$.
+2. $P=80e^{-0.3t}$.
+3. $\dfrac{dP}{dt}=0.05P$.
+4. The half-life is $\dfrac{\ln2}{0.1}=10\ln2$.
+5. $k>0$ means growth; $k<0$ means decay.
+
+#### Silver
+
+1. $k=\dfrac{1}{10}\ln\left(\dfrac{7}{5}\right)$.
+2. $k=\dfrac{1}{4}\ln\left(\dfrac{4}{3}\right)$.
+3. $N(5)=200e^2$.
+4. $t=4\ln6$.
+5. $k=\dfrac{\ln2}{8}$.
+
+#### Gold
+
+1. $k=\dfrac{\ln3}{12}$.
+2. $k=\dfrac{\ln2}{6}$.
+3. $P=\dfrac{1000}{1+9e^{-0.4t}}$.
+4. $t=\dfrac{\ln36}{0.4}=2.5\ln36\approx8.96$.
+5. If $P=0$ or $P=M$, then $\dfrac{dP}{dt}=0$, so both are equilibrium solutions.
+
+### Answers to Exercises 10.5
+
+#### Bronze
+
+1. $T=20+60e^{-0.2t}$.
+2. $T=25+45e^{-kt}$.
+3. $T(0)=80$.
+4. The long-term temperature is $20^\circ\text{C}$.
+5. If $T=A$, then $T-A=0$, so the derivative is $0$.
+
+#### Silver
+
+1. $k=\dfrac{1}{5}\ln\left(\dfrac{7}{4}\right)$.
+2. $t=\dfrac{\ln7}{k}=\dfrac{5\ln7}{\ln(7/4)}$.
+3. $T=18+10e^{-0.1t}$.
+4. $T=30-20e^{-0.2t}$.
+5. $W=100-30e^{-0.3t}$.
+
+#### Gold
+
+1. $T=26+54e^{-\dfrac{t}{10}\ln(\dfrac{9}{4})}$.
+2. $t=\dfrac{10\ln(27/2)}{\ln(9/4)}\approx32.1$ minutes.
+3. $T=32-20e^{-kt}$, where $k=\dfrac{1}{5}\ln2$.
+4. Differentiating gives $\dfrac{dT}{dt}=-k(T_0-A)e^{-kt}=-k(T-A)$.
+5. If $C\neq0$, then $e^{-kt}$ is positive for every finite $t$, so $T-A=Ce^{-kt}$ is never $0$.
+
+### Answers to Exercises 10.6
+
+#### Bronze
+
+1. $S=1000e^{0.04t}$.
+2. $S=5000e^{-0.02t}$.
+3. $S(1)=15000e^{0.02}\approx15303.02$.
+4. It decreases continuously at $10\%$ per unit time.
+5. It has no random term, so each value of $t$ gives exactly one predicted value.
+
+#### Silver
+
+1. The value is $2000e^{0.15}\approx2323.67$.
+2. The value is $8000e^{-0.08}\approx7384.93$.
+3. $r=0.02$.
+4. $t=\dfrac{\ln(3/2)}{0.06}\approx6.76$.
+5. $t=\dfrac{\ln(5/3)}{0.08}\approx6.39$.
+
+#### Gold
+
+1. Separating variables gives $\ln S=rt+C$, so $S=Ae^{rt}$. Since $S(0)=S_0$, $A=S_0$.
+2. $r=\dfrac{\ln2}{3}$.
+3. $k=\dfrac{1}{4}\ln\left(\dfrac{5}{4}\right)$.
+4. Daily exchange rates have shocks, interventions, liquidity effects and news effects, so a smooth deterministic exponential curve is only a simplified backbone.
+5. $r=\dfrac{1}{2}\ln\left(\dfrac{11}{9}\right)$ and $S(0)=18000e^{-r}$.
+
+### Answers to STEP-style extension questions
+
+1. Separating variables gives
+   $$
+   \int \dfrac{1}{y}\,dy=\int x\,dx.
+   $$
+   Hence
+   $$
+   \ln|y|=\dfrac{x^2}{2}+C.
+   $$
+   Since $y(0)=2$,
+   $$
+   y=2e^{x^2/2}.
+   $$
+   Differentiating gives
+   $$
+   \dfrac{dy}{dx}=2e^{x^2/2}\cdot x=xy.
+   $$
+
+2. Separate variables:
+   $$
+   \int \dfrac{1}{(y-1)^2}\,dy=\int x\,dx.
+   $$
+   Thus
+   $$
+   -\dfrac{1}{y-1}=\dfrac{x^2}{2}+C.
+   $$
+   Since $y(0)=2$, we get $C=-1$. Hence
+   $$
+   \dfrac{1}{y-1}=1-\dfrac{x^2}{2}.
+   $$
+   Therefore,
+   $$
+   y=1+\dfrac{1}{1-\dfrac{x^2}{2}}.
+   $$
+   The largest interval containing $0$ is
+   $$
+   -\sqrt2<x<\sqrt2.
+   $$
+
+3. Separate variables:
+   $$
+   \dfrac{dP}{P(1-P/M)}=k\,dt.
+   $$
+   Since
+   $$
+   \dfrac{1}{P(1-P/M)}=\dfrac{M}{P(M-P)}
+   =
+   \dfrac{1}{P}+\dfrac{1}{M-P},
+   $$
+   integration gives
+   $$
+   \ln|P|-\ln|M-P|=kt+C.
+   $$
+   Hence
+   $$
+   \ln\left|\dfrac{P}{M-P}\right|=kt+C.
+   $$
+   Therefore
+   $$
+   \dfrac{P}{M-P}=Be^{kt}.
+   $$
+   Rearranging gives
+   $$
+   P=\dfrac{M}{1+Ae^{-kt}}.
+   $$
+
+4. Separating variables gives
+   $$
+   \int \dfrac{1}{T-A}\,dT=\int -k\,dt.
+   $$
+   Hence
+   $$
+   \ln|T-A|=-kt+C.
+   $$
+   Therefore
+   $$
+   T=A+Ce^{-kt}.
+   $$
+   Using $T(0)=T_0$ gives $C=T_0-A$, so
+   $$
+   T=A+(T_0-A)e^{-kt}.
+   $$
+   Since $e^{-kt}>0$ for finite $t$, the model approaches $A$ but does not reach it in finite time unless $T_0=A$.
+
+5. Since
+   $$
+   S=S_0e^{rt},
+   $$
+   the two conditions give
+   $$
+   18000=S_0e^r
+   $$
+   and
+   $$
+   22000=S_0e^{3r}.
+   $$
+   Dividing gives
+   $$
+   \dfrac{11}{9}=e^{2r}.
+   $$
+   Hence
+   $$
+   r=\dfrac{1}{2}\ln\left(\dfrac{11}{9}\right).
+   $$
+   Also
+   $$
+   S_0=18000e^{-r}
+   =
+   18000\sqrt{\dfrac{9}{11}}.
+   $$

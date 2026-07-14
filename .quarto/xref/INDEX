@@ -1,0 +1,44 @@
+{
+  "index.qmd": {
+    "index.html": "849bbfe9"
+  },
+  "chapters/01-algebra.qmd": {
+    "01-algebra.html": "b7407823"
+  },
+  "chapters/02-log-exp.qmd": {
+    "02-log-exp.html": "0e99a825"
+  },
+  "chapters/03-trigonometry.qmd": {
+    "03-trigonometry.html": "6c3b4817"
+  },
+  "chapters/04-differentiation.qmd": {
+    "04-differentiation.html": "652de7d5"
+  },
+  "chapters/05-integration.qmd": {
+    "05-integration.html": "b6425737"
+  },
+  "chapters/06-numerical-methods.qmd": {
+    "06-numerical-methods.html": "38d8c838"
+  },
+  "chapters/07-further-algebra.qmd": {
+    "07-further-algebra.html": "f8d7d20d"
+  },
+  "chapters/08-further-calculus.qmd": {
+    "08-further-calculus.html": "5a90fe86"
+  },
+  "chapters/09-vectors.qmd": {
+    "09-vectors.html": "2fded2d7"
+  },
+  "chapters/10-differential-equations.qmd": {
+    "10-differential-equations.html": "18de1a95"
+  },
+  "chapters/11-complex-numbers.qmd": {
+    "11-complex-numbers.html": "8c208018"
+  },
+  "references.qmd": {
+    "references.html": "29e7809e"
+  },
+  "01-algebra.qmd": {
+    "01-algebra.html": "666f779b"
+  }
+}

@@ -1,0 +1,1495 @@
+# Algebra
+
+```{r}
+#| label: setup-algebra
+#| include: false
+
+library(ggplot2)
+
+book_theme <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(size = base_size - 1),
+      panel.grid.minor = element_blank()
+    )
+}
+```
+
+## Overview
+
+This chapter develops six connected algebraic ideas:
+
+1. the modulus function;
+2. graphs involving modulus functions;
+3. modulus inequalities;
+4. polynomial division;
+5. the factor theorem;
+6. the remainder theorem.
+
+The central aim is to connect symbolic algebra, graphical interpretation and numerical checking.
+
+::: {.callout-note}
+The exercises are organised into tiers.
+
+**Bronze** develops fluency.  
+**Silver** develops simple application.  
+**Gold** develops exam-style reasoning.  
+The **STEP-style** section extends the chapter beyond routine A Level fluency.
+:::
+
+## 1.1 The modulus function
+
+### Key mathematical ideas
+
+The modulus of a real number is its distance from zero on the number line.
+
+$$
+|x| =
+\begin{cases}
+x, & x \geq 0,\\
+-x, & x < 0.
+\end{cases}
+$$
+
+Therefore, $|x|$ is always non-negative.
+
+For example,
+
+$$
+|5|=5,\qquad |-5|=5.
+$$
+
+A useful equation rule is:
+
+$$
+|A|=k,\quad k\geq 0
+\quad \Longleftrightarrow \quad
+A=k \ \text{or}\ A=-k.
+$$
+
+If $k<0$, then the equation $|A|=k$ has no real solution.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-modulus-basic
+#| fig-cap: "The graph of y = |x|."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-5, 5, length.out = 500)
+)
+
+df$y <- abs(df$x)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  coord_equal() +
+  labs(
+    title = "Graph of y = |x|",
+    subtitle = "The rule changes at x = 0.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+The sharp corner at the origin occurs because the function changes from $y=-x$ to $y=x$.
+
+### Worked example
+
+Solve
+
+$$
+|3x-2|=10.
+$$
+
+Since $|A|=10$ means $A=10$ or $A=-10$, we solve
+
+$$
+3x-2=10
+$$
+
+or
+
+$$
+3x-2=-10.
+$$
+
+From the first equation,
+
+$$
+3x=12,
+$$
+
+so
+
+$$
+x=4.
+$$
+
+From the second equation,
+
+$$
+3x=-8,
+$$
+
+so
+
+$$
+x=-\dfrac{8}{3}.
+$$
+
+Therefore,
+
+$$
+x=4
+\quad \text{or} \quad
+x=-\dfrac{8}{3}.
+$$
+
+### Short investigation
+
+Change the value of $a$ in the code below and observe the graph of $y=|x-a|$.
+
+```{r}
+#| label: fig-modulus-shift
+#| fig-cap: "Exploring the family y = |x - a|."
+#| fig-width: 6
+#| fig-height: 4
+
+a <- 2
+
+df <- data.frame(
+  x = seq(-5, 7, length.out = 600)
+)
+
+df$y <- abs(df$x - a)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_vline(xintercept = a, linetype = "dashed") +
+  labs(
+    title = paste0("Graph of y = |x - ", a, "|"),
+    subtitle = "The turning point occurs at x = a.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Exercises 1.1
+
+#### Bronze
+
+1. Solve $|x|=7$.
+2. Solve $|x|=0$.
+3. Solve $|x|=-3$.
+4. Solve $|2x|=8$.
+5. Solve $|x+1|=5$.
+
+#### Silver
+
+1. Solve $|3x-1|=8$.
+2. Solve $|5-2x|=9$.
+3. Solve $|4x+7|=3$.
+4. Solve $|6-3x|=12$.
+5. Solve $|2x+5|=|x-1|$.
+
+#### Gold
+
+1. Solve $|3x-4|=2x+1$.
+2. Solve $|x+6|=3x-2$.
+3. Solve $|2x-5|=|x+4|$.
+4. Find all real values of $x$ such that $|x-2|=x^2-4$.
+5. Find all real values of $x$ such that $|2x+1|=x^2+x-2$.
+
+## 1.2 Graphs involving modulus functions
+
+### Key mathematical ideas
+
+For a linear expression $ax+b$, the graph
+
+$$
+y=|ax+b|
+$$
+
+has a turning point where
+
+$$
+ax+b=0.
+$$
+
+Solving,
+
+$$
+x=-\dfrac{b}{a}.
+$$
+
+The graph is V-shaped because the output is reflected above the $x$-axis.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-modulus-linear
+#| fig-cap: "The graph of y = |2x - 3|."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-2, 5, length.out = 600)
+)
+
+df$y <- abs(2 * df$x - 3)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_vline(xintercept = 3/2, linetype = "dashed") +
+  annotate("point", x = 3/2, y = 0, size = 3) +
+  annotate("text", x = 3/2, y = 0.8, label = "turning point") +
+  labs(
+    title = "Graph of y = |2x - 3|",
+    subtitle = "The turning point occurs where 2x - 3 = 0.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Sketch
+
+$$
+y=|3x+6|.
+$$
+
+The expression inside the modulus is zero when
+
+$$
+3x+6=0.
+$$
+
+Therefore,
+
+$$
+x=-2.
+$$
+
+So the turning point is
+
+$$
+(-2,0).
+$$
+
+For $x\geq -2$,
+
+$$
+|3x+6|=3x+6.
+$$
+
+For $x<-2$,
+
+$$
+|3x+6|=-(3x+6)=-3x-6.
+$$
+
+Hence the graph is made from two straight-line pieces meeting at $(-2,0)$.
+
+### Short investigation
+
+The following code plots several graphs of the form $y=|mx+c|$.
+
+```{r}
+#| label: fig-modulus-family
+#| fig-cap: "A family of graphs y = |mx + c|."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = rep(seq(-5, 5, length.out = 600), 3),
+  case = rep(c("m = 1, c = 0", "m = 2, c = -3", "m = -1, c = 2"), each = 600)
+)
+
+df$y <- ifelse(
+  df$case == "m = 1, c = 0",
+  abs(df$x),
+  ifelse(
+    df$case == "m = 2, c = -3",
+    abs(2 * df$x - 3),
+    abs(-df$x + 2)
+  )
+)
+
+ggplot(df, aes(x = x, y = y, linetype = case)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  labs(
+    title = "Graphs of y = |mx + c|",
+    subtitle = "Changing m and c changes the steepness and turning point.",
+    x = "x",
+    y = "y",
+    linetype = "Function"
+  ) +
+  book_theme()
+```
+
+### Exercises 1.2
+
+#### Bronze
+
+1. State the turning point of $y=|x-4|$.
+2. State the turning point of $y=|x+3|$.
+3. State the turning point of $y=|2x-6|$.
+4. State the turning point of $y=|5x+10|$.
+5. State the turning point of $y=|-3x+9|$.
+
+#### Silver
+
+1. Sketch $y=|x-2|$.
+2. Sketch $y=|2x+4|$.
+3. Sketch $y=|3x-6|$.
+4. Find the coordinates where $y=|x-1|$ meets $y=3$.
+5. Find the coordinates where $y=|2x+1|$ meets $y=5$.
+
+#### Gold
+
+1. Solve graphically and algebraically: $|x-3|=2$.
+2. Solve graphically and algebraically: $|2x+1|=3$.
+3. Find the coordinates of intersection of $y=|x+2|$ and $y=x+4$.
+4. Find the coordinates of intersection of $y=|2x-1|$ and $y=x+2$.
+5. Determine the values of $k$ for which $|x-1|=k$ has exactly two distinct real solutions.
+
+## 1.3 Modulus inequalities
+
+### Key mathematical ideas
+
+Modulus inequalities can often be interpreted using distance.
+
+For example,
+
+$$
+|x-a|<r
+$$
+
+means that the distance from $x$ to $a$ is less than $r$.
+
+So
+
+$$
+a-r<x<a+r.
+$$
+
+Similarly,
+
+$$
+|x-a|>r
+$$
+
+means that the distance from $x$ to $a$ is greater than $r$.
+
+So
+
+$$
+x<a-r
+\quad \text{or} \quad
+x>a+r.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-modulus-inequality
+#| fig-cap: "The shaded solution region for |x - 2| < 3."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-4, 8, length.out = 600)
+)
+
+df$y <- abs(df$x - 2)
+df$inside <- df$y < 3
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_ribbon(
+    data = subset(df, inside),
+    aes(ymin = y, ymax = 3),
+    alpha = 0.3
+  ) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 3, linetype = "dashed") +
+  geom_vline(xintercept = -1, linetype = "dashed") +
+  geom_vline(xintercept = 5, linetype = "dashed") +
+  annotate("text", x = 2, y = 1.4, label = "-1 < x < 5") +
+  labs(
+    title = "Graph of y = |x - 2| and y = 3",
+    subtitle = "The shaded region shows where |x - 2| < 3.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Solve
+
+$$
+|x-5|\leq 4.
+$$
+
+This means the distance from $x$ to $5$ is at most $4$.
+
+Therefore,
+
+$$
+-4\leq x-5\leq 4.
+$$
+
+Adding $5$ throughout gives
+
+$$
+1\leq x\leq 9.
+$$
+
+So the solution is
+
+$$
+x\in[1,9].
+$$
+
+### Short investigation
+
+Change the value of $r$ below and observe how the solution interval changes.
+
+```{r}
+#| label: fig-modulus-inequality-family
+#| fig-cap: "Exploring the shaded region for |x - 1| < r."
+#| fig-width: 6
+#| fig-height: 4
+
+r <- 2.5
+
+df <- data.frame(
+  x = seq(-4, 6, length.out = 600)
+)
+
+df$y <- abs(df$x - 1)
+df$inside <- df$y < r
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_ribbon(
+    data = subset(df, inside),
+    aes(ymin = y, ymax = r),
+    alpha = 0.3
+  ) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = r, linetype = "dashed") +
+  geom_vline(xintercept = 1 - r, linetype = "dashed") +
+  geom_vline(xintercept = 1 + r, linetype = "dashed") +
+  annotate(
+    "text",
+    x = 1,
+    y = r / 2,
+    label = paste0(1 - r, " < x < ", 1 + r)
+  ) +
+  labs(
+    title = paste0("Graph of y = |x - 1| and y = ", r),
+    subtitle = "The shaded region changes as r changes.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Exercises 1.3
+
+#### Bronze
+
+1. Solve $|x|<4$.
+2. Solve $|x|>6$.
+3. Solve $|x-2|<5$.
+4. Solve $|x+1|\leq 3$.
+5. Solve $|x-4|\geq 7$.
+
+#### Silver
+
+1. Solve $|2x|<10$.
+2. Solve $|3x-6|\leq 9$.
+3. Solve $|5-2x|<7$.
+4. Solve $|4x+8|>12$.
+5. Solve $|6-3x|\geq 15$.
+
+#### Gold
+
+1. Solve $|2x-1|<5$.
+2. Solve $|3x+4|\leq 2$.
+3. Solve $|x-2|<|x+4|$.
+4. Solve $|2x+1|\geq |x-5|$.
+5. Find all values of $k$ such that $|x-3|<k$ has no real solution.
+
+## 1.4 Polynomial division
+
+### Key mathematical ideas
+
+Polynomial division is based on the division algorithm.
+
+If $P(x)$ is divided by $D(x)$, then
+
+$$
+P(x)=D(x)Q(x)+R(x),
+$$
+
+where $Q(x)$ is the quotient and $R(x)$ is the remainder.
+
+If the divisor is linear, then the remainder is constant.
+
+If the divisor is quadratic, then the remainder is at most linear.
+
+For examination work, the safest written method is **long division**. Synthetic division is a useful checking method for divisors of the form $x-a$, but it should not replace the full written method unless it is explicitly allowed.
+
+### Worked example using long division
+
+Divide
+
+$$
+x^3-2x^2-5x+6
+$$
+
+by
+
+$$
+x-1.
+$$
+
+We divide term by term.
+
+First,
+
+$$
+\dfrac{x^3}{x}=x^2.
+$$
+
+Multiply $x-1$ by $x^2$:
+
+$$
+x^2(x-1)=x^3-x^2.
+$$
+
+Subtract this from the original polynomial:
+
+$$
+\begin{aligned}
+x^3-2x^2-5x+6-(x^3-x^2)
+&=x^3-2x^2-5x+6-x^3+x^2\\
+&=-x^2-5x+6.
+\end{aligned}
+$$
+
+Next,
+
+$$
+\dfrac{-x^2}{x}=-x.
+$$
+
+Multiply $x-1$ by $-x$:
+
+$$
+-x(x-1)=-x^2+x.
+$$
+
+Subtract:
+
+$$
+\begin{aligned}
+-x^2-5x+6-(-x^2+x)
+&=-x^2-5x+6+x^2-x\\
+&=-6x+6.
+\end{aligned}
+$$
+
+Finally,
+
+$$
+\dfrac{-6x}{x}=-6.
+$$
+
+Multiply $x-1$ by $-6$:
+
+$$
+-6(x-1)=-6x+6.
+$$
+
+Subtract:
+
+$$
+(-6x+6)-(-6x+6)=0.
+$$
+
+Therefore,
+
+$$
+x^3-2x^2-5x+6=(x-1)(x^2-x-6).
+$$
+
+So the quotient is
+
+$$
+x^2-x-6
+$$
+
+and the remainder is
+
+$$
+0.
+$$
+
+### Synthetic division check
+
+Synthetic division gives a quick check when the divisor has the form $x-a$.
+
+Here, the divisor is $x-1$, so $a=1$.
+
+The coefficients of
+
+$$
+x^3-2x^2-5x+6
+$$
+
+are
+
+$$
+1,\ -2,\ -5,\ 6.
+$$
+
+The synthetic division check is
+
+$$
+\begin{array}{c|rrrr}
+1 & 1 & -2 & -5 & 6\\
+  &   & 1 & -1 & -6\\
+\hline
+  & 1 & -1 & -6 & 0
+\end{array}
+$$
+
+This gives quotient coefficients
+
+$$
+1,\ -1,\ -6,
+$$
+
+so the quotient is
+
+$$
+x^2-x-6.
+$$
+
+The final number is $0$, so the remainder is $0$.
+
+This agrees with the long division result.
+
+::: {.callout-warning}
+Synthetic division is included here as a checking method. For examination working, present the long division method unless the examination explicitly allows synthetic division.
+:::
+
+### Visualisation using R
+
+```{r}
+#| label: fig-polynomial-division-root
+#| fig-cap: "The graph of f(x) = x^3 - 2x^2 - 5x + 6."
+#| fig-width: 6
+#| fig-height: 4
+
+f <- function(x) x^3 - 2*x^2 - 5*x + 6
+
+df <- data.frame(
+  x = seq(-3.5, 4, length.out = 800)
+)
+
+df$y <- f(df$x)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  annotate("point", x = 1, y = 0, size = 3) +
+  annotate("text", x = 1.2, y = 6, label = "x = 1") +
+  labs(
+    title = expression(f(x) == x^3 - 2*x^2 - 5*x + 6),
+    subtitle = "Since f(1) = 0, division by x - 1 leaves remainder 0.",
+    x = "x",
+    y = "f(x)"
+  ) +
+  book_theme()
+```
+
+### Short investigation
+
+Use R to check the identity
+
+$$
+P(x)=D(x)Q(x)+R(x).
+$$
+
+```{r}
+P <- function(x) x^3 - 2*x^2 - 5*x + 6
+D <- function(x) x - 1
+Q <- function(x) x^2 - x - 6
+R <- function(x) 0
+
+test_values <- c(-2, 0, 1, 3)
+
+data.frame(
+  x = test_values,
+  P_x = P(test_values),
+  DQ_plus_R = D(test_values) * Q(test_values) + R(test_values)
+)
+```
+
+### Synthetic division in R
+
+The following code performs the synthetic division check.
+
+```{r}
+root <- 1
+coefficients <- c(1, -2, -5, 6)
+
+bottom_row <- numeric(length(coefficients))
+bottom_row[1] <- coefficients[1]
+
+for (i in 2:length(coefficients)) {
+  bottom_row[i] <- coefficients[i] + root * bottom_row[i - 1]
+}
+
+data.frame(
+  coefficient = coefficients,
+  synthetic_bottom_row = bottom_row
+)
+```
+
+The last entry is the remainder. The previous entries are the quotient coefficients.
+
+### Exercises 1.4
+
+#### Bronze
+
+1. Divide $x^2+5x+6$ by $x+2$.
+2. Divide $x^2-9$ by $x-3$.
+3. Divide $x^2-4x+3$ by $x-1$.
+4. Divide $x^3-1$ by $x-1$.
+5. Divide $x^3+8$ by $x+2$.
+
+#### Silver
+
+1. Divide $x^3+2x^2-x-2$ by $x+2$.
+2. Divide $x^3-4x^2+x+6$ by $x-2$.
+3. Divide $2x^3+3x^2-8x+3$ by $x+3$.
+4. Divide $x^4-1$ by $x-1$.
+5. Divide $x^3+3x^2+3x+1$ by $x+1$.
+
+#### Gold
+
+1. Divide $x^4-3x^3+2x^2+x-1$ by $x-1$.
+2. Divide $2x^4-x^3-7x^2+5x+3$ by $x+1$.
+3. Divide $x^4+2x^3-3x^2-4x+4$ by $x^2-1$.
+4. Divide $2x^4+3x^3-x^2+5x-2$ by $x^2+x-1$.
+5. Given that $P(x)=x^3+ax^2+bx+6$ is divisible by $x-2$, find a relation between $a$ and $b$.
+
+## 1.5 The factor theorem
+
+### Key mathematical ideas
+
+The factor theorem states:
+
+If
+
+$$
+P(a)=0,
+$$
+
+then
+
+$$
+x-a
+$$
+
+is a factor of $P(x)$.
+
+Conversely, if $x-a$ is a factor of $P(x)$, then
+
+$$
+P(a)=0.
+$$
+
+### Worked example
+
+Show that $x-2$ is a factor of
+
+$$
+P(x)=x^3-5x^2+2x+8.
+$$
+
+By the factor theorem, $x-2$ is a factor if $P(2)=0$.
+
+Now,
+
+$$
+P(2)=2^3-5(2)^2+2(2)+8.
+$$
+
+So
+
+$$
+P(2)=8-20+4+8=0.
+$$
+
+Therefore,
+
+$$
+x-2
+$$
+
+is a factor of $P(x)$.
+
+To factorise fully, divide $P(x)$ by $x-2$.
+
+Using long division,
+
+$$
+x^3-5x^2+2x+8=(x-2)(x^2-3x-4).
+$$
+
+Then
+
+$$
+x^2-3x-4=(x-4)(x+1).
+$$
+
+Therefore,
+
+$$
+P(x)=(x-2)(x-4)(x+1).
+$$
+
+### Synthetic division check
+
+For the divisor $x-2$, we use $a=2$.
+
+The coefficients of
+
+$$
+x^3-5x^2+2x+8
+$$
+
+are
+
+$$
+1,\ -5,\ 2,\ 8.
+$$
+
+The synthetic division check is
+
+$$
+\begin{array}{c|rrrr}
+2 & 1 & -5 & 2 & 8\\
+  &   & 2 & -6 & -8\\
+\hline
+  & 1 & -3 & -4 & 0
+\end{array}
+$$
+
+This confirms that the quotient is
+
+$$
+x^2-3x-4
+$$
+
+and the remainder is $0$.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-factor-theorem
+#| fig-cap: "The graph of P(x) = x^3 - 5x^2 + 2x + 8."
+#| fig-width: 6
+#| fig-height: 4
+
+P <- function(x) x^3 - 5*x^2 + 2*x + 8
+
+df <- data.frame(
+  x = seq(-2, 5, length.out = 800)
+)
+
+df$y <- P(df$x)
+
+roots <- data.frame(
+  x = c(-1, 2, 4),
+  y = c(0, 0, 0)
+)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_point(data = roots, aes(x = x, y = y), size = 3) +
+  labs(
+    title = expression(P(x) == x^3 - 5*x^2 + 2*x + 8),
+    subtitle = "The x-intercepts correspond to linear factors.",
+    x = "x",
+    y = "P(x)"
+  ) +
+  book_theme()
+```
+
+### Short investigation
+
+Change the roots $a$, $b$ and $c$ below.
+
+```{r}
+#| label: fig-cubic-roots-family
+#| fig-cap: "Exploring f(x) = (x - a)(x - b)(x - c)."
+#| fig-width: 6
+#| fig-height: 4
+
+a <- -2
+b <- 1
+c <- 3
+
+f <- function(x) (x - a) * (x - b) * (x - c)
+
+df <- data.frame(
+  x = seq(-5, 5, length.out = 800)
+)
+
+df$y <- f(df$x)
+
+root_df <- data.frame(
+  x = c(a, b, c),
+  y = c(0, 0, 0)
+)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_point(data = root_df, aes(x = x, y = y), size = 3) +
+  labs(
+    title = "Graph of f(x) = (x - a)(x - b)(x - c)",
+    subtitle = "The chosen values of a, b and c become the roots.",
+    x = "x",
+    y = "f(x)"
+  ) +
+  book_theme()
+```
+
+### Exercises 1.5
+
+#### Bronze
+
+1. Show that $x-1$ is a factor of $x^2-3x+2$.
+2. Show that $x+2$ is a factor of $x^2+x-2$.
+3. Show that $x-3$ is a factor of $x^2-5x+6$.
+4. Show that $x+1$ is a factor of $x^3+1$.
+5. Show that $x-2$ is a factor of $x^3-8$.
+
+#### Silver
+
+1. Show that $x-1$ is a factor of $x^3-4x^2+x+2$.
+2. Show that $x+2$ is a factor of $x^3+3x^2-4x-12$.
+3. Factorise $x^3-6x^2+11x-6$ fully.
+4. Factorise $x^3+x^2-4x-4$ fully.
+5. Factorise $2x^3-3x^2-8x+12$ fully.
+
+#### Gold
+
+1. Find $k$ if $x-2$ is a factor of $x^3+kx^2-4x+4$.
+2. Find $k$ if $x+1$ is a factor of $2x^3+kx^2-5x+6$.
+3. Given that $x-3$ is a factor of $x^3+ax^2+bx-9$, find a relation between $a$ and $b$.
+4. The polynomial $x^3+px^2+qx-6$ has roots $1$, $2$ and $r$. Find $p$, $q$ and $r$.
+5. The polynomial $2x^3+ax^2+bx-6$ has $x-1$ and $x+2$ as factors. Find $a$ and $b$.
+
+## 1.6 The remainder theorem
+
+### Key mathematical ideas
+
+The remainder theorem states:
+
+When $P(x)$ is divided by $x-a$, the remainder is
+
+$$
+P(a).
+$$
+
+More generally, when $P(x)$ is divided by $ax-b$, the remainder is
+
+$$
+P\left(\dfrac{b}{a}\right).
+$$
+
+This is connected to polynomial division because if
+
+$$
+P(x)=(x-a)Q(x)+R,
+$$
+
+then substituting $x=a$ gives
+
+$$
+P(a)=(a-a)Q(a)+R.
+$$
+
+Therefore,
+
+$$
+P(a)=R.
+$$
+
+### Worked example
+
+Find the remainder when
+
+$$
+P(x)=x^3-2x^2-5x+6
+$$
+
+is divided by $x-2$.
+
+By the remainder theorem, the remainder is $P(2)$.
+
+Now,
+
+$$
+P(2)=2^3-2(2)^2-5(2)+6.
+$$
+
+So
+
+$$
+P(2)=8-8-10+6=-4.
+$$
+
+Therefore, the remainder is
+
+$$
+-4.
+$$
+
+### Long division check
+
+Dividing
+
+$$
+x^3-2x^2-5x+6
+$$
+
+by
+
+$$
+x-2
+$$
+
+using long division gives:
+
+First,
+
+$$
+\dfrac{x^3}{x}=x^2.
+$$
+
+Subtract
+
+$$
+x^2(x-2)=x^3-2x^2.
+$$
+
+Then
+
+$$
+x^3-2x^2-5x+6-(x^3-2x^2)=-5x+6.
+$$
+
+Next,
+
+$$
+\dfrac{-5x}{x}=-5.
+$$
+
+Subtract
+
+$$
+-5(x-2)=-5x+10.
+$$
+
+Then
+
+$$
+(-5x+6)-(-5x+10)=-4.
+$$
+
+Therefore,
+
+$$
+x^3-2x^2-5x+6=(x-2)(x^2-5)-4.
+$$
+
+The remainder is again
+
+$$
+-4.
+$$
+
+### Synthetic division check
+
+For the divisor $x-2$, we use $a=2$.
+
+The coefficients are
+
+$$
+1,\ -2,\ -5,\ 6.
+$$
+
+The synthetic division check is
+
+$$
+\begin{array}{c|rrrr}
+2 & 1 & -2 & -5 & 6\\
+  &   & 2 & 0 & -10\\
+\hline
+  & 1 & 0 & -5 & -4
+\end{array}
+$$
+
+This gives quotient
+
+$$
+x^2-5
+$$
+
+and remainder
+
+$$
+-4.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-remainder-theorem
+#| fig-cap: "The value P(2) gives the remainder when P(x) is divided by x - 2."
+#| fig-width: 6
+#| fig-height: 4
+
+P <- function(x) x^3 - 2*x^2 - 5*x + 6
+
+df <- data.frame(
+  x = seq(-3.5, 4, length.out = 800)
+)
+
+df$y <- P(df$x)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_vline(xintercept = 2, linetype = "dashed") +
+  annotate("point", x = 2, y = P(2), size = 3) +
+  annotate("text", x = 2.45, y = P(2), label = "P(2) = -4") +
+  labs(
+    title = expression(P(x) == x^3 - 2*x^2 - 5*x + 6),
+    subtitle = "The y-value at x = 2 gives the remainder.",
+    x = "x",
+    y = "P(x)"
+  ) +
+  book_theme()
+```
+
+### Short investigation
+
+Evaluate the same polynomial at different values of $a$.
+
+```{r}
+P <- function(x) x^3 - 2*x^2 - 5*x + 6
+
+a_values <- c(-2, -1, 0, 1, 2, 3)
+
+data.frame(
+  divisor = paste0("x - (", a_values, ")"),
+  a = a_values,
+  remainder = P(a_values)
+)
+```
+
+### Exercises 1.6
+
+#### Bronze
+
+1. Find the remainder when $x^2+3x+1$ is divided by $x-1$.
+2. Find the remainder when $x^2-5x+6$ is divided by $x-2$.
+3. Find the remainder when $x^3+1$ is divided by $x+1$.
+4. Find the remainder when $x^3-8$ is divided by $x-2$.
+5. Find the remainder when $2x^2+x-4$ is divided by $x+2$.
+
+#### Silver
+
+1. Find the remainder when $x^3-4x^2+x+6$ is divided by $x-3$.
+2. Find the remainder when $2x^3+x^2-5x+1$ is divided by $x+1$.
+3. Find the remainder when $x^4-3x^2+2$ is divided by $x-2$.
+4. Find the remainder when $3x^3-2x+5$ is divided by $2x-1$.
+5. Find the remainder when $x^3+2x^2-x+4$ is divided by $3x+1$.
+
+#### Gold
+
+1. Find $k$ if $x-2$ leaves remainder $5$ when it divides $x^3+kx^2-3x+1$.
+2. Find $k$ if $x+1$ leaves remainder $4$ when it divides $2x^3+kx^2-x+5$.
+3. The polynomial $P(x)=x^3+ax^2+bx+2$ leaves remainder $4$ when divided by $x-1$ and remainder $-10$ when divided by $x+2$. Find two equations in $a$ and $b$.
+4. Find the remainder when $P(x)=x^{50}+x^{25}+1$ is divided by $x-1$.
+5. Find the remainder when $P(x)=2x^3-5x^2+7x-3$ is divided by $2x+3$.
+
+## STEP-style extension questions
+
+These questions are designed to require more than routine application.
+
+### STEP-style Question 1
+
+Let
+
+$$
+f(x)=|x-a|+|x-b|,
+$$
+
+where $a<b$.
+
+Show that the minimum value of $f(x)$ is $b-a$.
+
+### STEP-style Question 2
+
+Find all real numbers $x$ satisfying
+
+$$
+|x-1|+|x+2|=7.
+$$
+
+### STEP-style Question 3
+
+Let
+
+$$
+P(x)=x^3+ax^2+bx+c.
+$$
+
+Suppose $P(1)=P(2)=P(3)=0$.
+
+Find $P(x)$ in factorised form and express $a$, $b$ and $c$.
+
+### STEP-style Question 4
+
+Let
+
+$$
+P(x)=x^4+ax^3+bx^2+cx+d.
+$$
+
+Suppose that $P(x)$ is divisible by both $x-1$ and $x+1$.
+
+Find two equations involving $a$, $b$, $c$ and $d$.
+
+### STEP-style Question 5
+
+Let
+
+$$
+P(x)=x^3+px+q.
+$$
+
+Suppose that the remainder when $P(x)$ is divided by $x-1$ is $4$, and the remainder when $P(x)$ is divided by $x+2$ is $-5$.
+
+Find $p$ and $q$.
+
+## Reflection questions
+
+1. What is the difference between solving $|A|=k$ and solving $A=k$?
+2. Why do modulus equations sometimes require checking?
+3. How does the graph of $y=|ax+b|$ reveal the solution structure?
+4. Why is long division the safest written method for polynomial division?
+5. How can synthetic division be used as a checking method?
+6. How is polynomial division connected to numerical substitution?
+7. What is the difference between the factor theorem and the remainder theorem?
+8. What can R show clearly that algebra alone may hide?
+9. What can algebra prove exactly that a graph can only suggest?
+
+## Answers
+
+### Answers to Exercises 1.1
+
+#### Bronze
+
+1. $x=\pm 7$.
+2. $x=0$.
+3. No real solution.
+4. $x=\pm 4$.
+5. $x=4$ or $x=-6$.
+
+#### Silver
+
+1. $x=3$ or $x=-\dfrac{7}{3}$.
+2. $x=7$ or $x=-2$.
+3. $x=-1$ or $x=-\dfrac{5}{2}$.
+4. $x=6$ or $x=-2$.
+5. $x=-6$ or $x=-\dfrac{4}{3}$.
+
+#### Gold
+
+1. $x=5$ or $x=\dfrac{3}{5}$.
+2. $x=4$.
+3. $x=9$ or $x=\dfrac{1}{3}$.
+4. $x=-3$ or $x=2$.
+5. $x=\dfrac{1+\sqrt{13}}{2}$ or $x=\dfrac{-3-\sqrt{13}}{2}$.
+
+### Answers to Exercises 1.2
+
+#### Bronze
+
+1. $(4,0)$.
+2. $(-3,0)$.
+3. $(3,0)$.
+4. $(-2,0)$.
+5. $(3,0)$.
+
+#### Silver
+
+1. Turning point $(2,0)$.
+2. Turning point $(-2,0)$.
+3. Turning point $(2,0)$.
+4. $(-2,3)$ and $(4,3)$.
+5. $(-3,5)$ and $(2,5)$.
+
+#### Gold
+
+1. $x=1$ or $x=5$.
+2. $x=1$ or $x=-2$.
+3. $(-3,1)$.
+4. $\left(-\dfrac{1}{3},\dfrac{5}{3}\right)$ and $(3,5)$.
+5. $k>0$.
+
+### Answers to Exercises 1.3
+
+#### Bronze
+
+1. $-4<x<4$.
+2. $x<-6$ or $x>6$.
+3. $-3<x<7$.
+4. $-4\leq x\leq 2$.
+5. $x\leq -3$ or $x\geq 11$.
+
+#### Silver
+
+1. $-5<x<5$.
+2. $-1\leq x\leq 5$.
+3. $-1<x<6$.
+4. $x<-5$ or $x>1$.
+5. $x\leq -3$ or $x\geq 7$.
+
+#### Gold
+
+1. $-2<x<3$.
+2. $-2\leq x\leq -\dfrac{2}{3}$.
+3. $x>-1$.
+4. $x\leq -6$ or $x\geq \dfrac{4}{3}$.
+5. $k\leq 0$.
+
+### Answers to Exercises 1.4
+
+#### Bronze
+
+1. Quotient $x+3$, remainder $0$.
+2. Quotient $x+3$, remainder $0$.
+3. Quotient $x-3$, remainder $0$.
+4. Quotient $x^2+x+1$, remainder $0$.
+5. Quotient $x^2-2x+4$, remainder $0$.
+
+#### Silver
+
+1. Quotient $x^2-1$, remainder $0$.
+2. Quotient $x^2-2x-3$, remainder $0$.
+3. Quotient $2x^2-3x+1$, remainder $0$.
+4. Quotient $x^3+x^2+x+1$, remainder $0$.
+5. Quotient $x^2+2x+1$, remainder $0$.
+
+#### Gold
+
+1. Quotient $x^3-2x^2+1$, remainder $0$.
+2. Quotient $2x^3-3x^2-4x+9$, remainder $-6$.
+3. Quotient $x^2+2x-2$, remainder $-2x+2$.
+4. Quotient $2x^2+x$, remainder $6x-2$.
+5. $2a+b+7=0$.
+
+### Answers to Exercises 1.5
+
+#### Bronze
+
+1. $f(1)=0$, so $x-1$ is a factor.
+2. $f(-2)=0$, so $x+2$ is a factor.
+3. $f(3)=0$, so $x-3$ is a factor.
+4. $f(-1)=0$, so $x+1$ is a factor.
+5. $f(2)=0$, so $x-2$ is a factor.
+
+#### Silver
+
+1. $f(1)=0$, so $x-1$ is a factor.
+2. $f(-2)=0$, so $x+2$ is a factor.
+3. $(x-1)(x-2)(x-3)$.
+4. $(x+1)(x-2)(x+2)$.
+5. $(x-2)(x+2)(2x-3)$.
+
+#### Gold
+
+1. $k=-1$.
+2. $k=-9$.
+3. $3a+b+6=0$.
+4. $r=3$, $p=-6$, $q=11$.
+5. $a=5$, $b=-1$.
+
+### Answers to Exercises 1.6
+
+#### Bronze
+
+1. $5$.
+2. $0$.
+3. $0$.
+4. $0$.
+5. $2$.
+
+#### Silver
+
+1. $0$.
+2. $5$.
+3. $6$.
+4. $\dfrac{35}{8}$.
+5. $\dfrac{122}{27}$.
+
+#### Gold
+
+1. $k=\dfrac{1}{2}$.
+2. $k=0$.
+3. $a+b=1$ and $4a-2b=-4$.
+4. $3$.
+5. $-\dfrac{63}{2}$.
+
+### Answers to STEP-style extension questions
+
+1. For $x\in[a,b]$, $|x-a|+|x-b|=(x-a)+(b-x)=b-a$. Outside this interval the sum is larger. Minimum value: $b-a$.
+2. $x=-4$ or $x=3$.
+3. $P(x)=(x-1)(x-2)(x-3)=x^3-6x^2+11x-6$, so $a=-6$, $b=11$, $c=-6$.
+4. Since $P(1)=0$ and $P(-1)=0$, we get $1+a+b+c+d=0$ and $1-a+b-c+d=0$.
+5. $p=0$ and $q=3$.

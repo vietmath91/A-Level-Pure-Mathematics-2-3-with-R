@@ -1,0 +1,1659 @@
+# Logarithmic and Exponential Functions
+
+```{r}
+#| label: setup-log-exp
+#| include: false
+
+library(ggplot2)
+
+book_theme <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(size = base_size - 1),
+      panel.grid.minor = element_blank()
+    )
+}
+```
+
+## Overview
+
+This chapter develops eight connected ideas:
+
+1. logarithms to base $10$;
+2. logarithms to base $a$;
+3. the laws of logarithms;
+4. solving logarithmic equations;
+5. solving exponential equations;
+6. solving exponential inequalities;
+7. natural logarithms;
+8. transforming relationships to linear form.
+
+The main theme is that logarithms and exponentials are inverse processes. Logarithms allow us to solve equations where the unknown appears in an index, and they also allow us to convert some curved relationships into straight-line relationships.
+
+::: {.callout-note}
+The exercises are organised into tiers.
+
+**Bronze** develops fluency.  
+**Silver** develops simple application.  
+**Gold** develops exam-style reasoning.  
+The **STEP-style** section extends the chapter beyond routine A Level fluency.
+:::
+
+## 2.1 Logarithms to base 10
+
+### Key mathematical ideas
+
+A logarithm answers the question:
+
+> What power is needed?
+
+For example,
+
+$$
+10^2=100.
+$$
+
+So
+
+$$
+\log_{10}100=2.
+$$
+
+In general,
+
+$$
+\log_{10}x=y
+\quad \Longleftrightarrow \quad
+10^y=x.
+$$
+
+The expression $\log_{10}x$ is defined only when
+
+$$
+x>0.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-log10-basic
+#| fig-cap: "The graph of y = log10(x)."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0.05, 100, length.out = 800)
+)
+
+df$y <- log10(df$x)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_vline(xintercept = 10, linetype = "dashed") +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  labs(
+    title = "Graph of y = log10(x)",
+    subtitle = "The graph passes through (1, 0) and (10, 1).",
+    x = "x",
+    y = "log10(x)"
+  ) +
+  book_theme()
+```
+
+The graph passes through $(1,0)$ because
+
+$$
+\log_{10}1=0.
+$$
+
+It passes through $(10,1)$ because
+
+$$
+\log_{10}10=1.
+$$
+
+### Worked example
+
+Evaluate
+
+$$
+\log_{10}1000.
+$$
+
+Since
+
+$$
+1000=10^3,
+$$
+
+we have
+
+$$
+\log_{10}1000=3.
+$$
+
+### Short investigation
+
+Use R to compare powers of $10$ with their logarithms.
+
+```{r}
+powers <- -3:5
+
+data.frame(
+  power = powers,
+  value = 10^powers,
+  log10_value = log10(10^powers)
+)
+```
+
+Observe that
+
+$$
+\log_{10}(10^n)=n.
+$$
+
+### Exercises 2.1
+
+#### Bronze
+
+1. Evaluate $\log_{10}100$.
+2. Evaluate $\log_{10}100000$.
+3. Evaluate $\log_{10}0.01$.
+4. Write $10^4=10000$ in logarithmic form.
+5. Solve $\log_{10}x=3$.
+
+#### Silver
+
+1. Evaluate $\log_{10}\sqrt{10}$.
+2. Evaluate $\log_{10}\left(\frac{1}{1000}\right)$.
+3. Solve $10^{2x}=1000$.
+4. Solve $\log_{10}(5x)=2$.
+5. Solve $\log_{10}(x-3)=1$.
+
+#### Gold
+
+1. Solve $10^{x+1}=1000$.
+2. Solve $\log_{10}(3x+1)=2$.
+3. Solve $10^{2x-1}=100$.
+4. Solve $\log_{10}(x+5)=\log_{10}(2x-1)$.
+5. Solve $\log_{10}(x^2)=2$.
+
+## 2.2 Logarithms to base $a$
+
+### Key mathematical ideas
+
+For $a>0$ and $a\neq1$,
+
+$$
+\log_a x=y
+\quad \Longleftrightarrow \quad
+a^y=x.
+$$
+
+For example,
+
+$$
+2^3=8
+$$
+
+so
+
+$$
+\log_2 8=3.
+$$
+
+Important facts include:
+
+$$
+\log_a1=0,
+$$
+
+$$
+\log_a a=1,
+$$
+
+and
+
+$$
+\log_a(a^x)=x.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-log-bases
+#| fig-cap: "Graphs of logarithms with different bases."
+#| fig-width: 6
+#| fig-height: 4
+
+x_values <- seq(0.05, 20, length.out = 800)
+
+df <- data.frame(
+  x = rep(x_values, 3),
+  base = rep(c("base 2", "base e", "base 10"), each = length(x_values))
+)
+
+df$y <- ifelse(
+  df$base == "base 2",
+  log(df$x, base = 2),
+  ifelse(
+    df$base == "base e",
+    log(df$x),
+    log10(df$x)
+  )
+)
+
+ggplot(df, aes(x = x, y = y, linetype = base)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  labs(
+    title = "Graphs of y = log_a(x)",
+    subtitle = "All logarithm graphs pass through (1, 0).",
+    x = "x",
+    y = "y",
+    linetype = "Function"
+  ) +
+  book_theme()
+```
+
+All logarithm graphs pass through $(1,0)$ because
+
+$$
+\log_a1=0
+$$
+
+for every valid base $a$.
+
+### Worked example
+
+Evaluate
+
+$$
+\log_3 81.
+$$
+
+Since
+
+$$
+81=3^4,
+$$
+
+we have
+
+$$
+\log_3 81=4.
+$$
+
+### Short investigation
+
+Change the base $a$ below.
+
+```{r}
+#| label: fig-log-changing-base
+#| fig-cap: "Exploring y = log_a(x) for different values of a."
+#| fig-width: 6
+#| fig-height: 4
+
+a <- 3
+
+df <- data.frame(
+  x = seq(0.05, 30, length.out = 800)
+)
+
+df$y <- log(df$x, base = a)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  labs(
+    title = paste0("Graph of y = log base ", a, " of x"),
+    subtitle = "Change a and observe how the graph changes.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Exercises 2.2
+
+#### Bronze
+
+1. Evaluate $\log_2 8$.
+2. Evaluate $\log_3 1$.
+3. Evaluate $\log_5 5$.
+4. Evaluate $\log_4\left(\frac{1}{16}\right)$.
+5. If $\log_7 x=2$, find $x$.
+
+#### Silver
+
+1. Solve $\log_2 x=5$.
+2. Evaluate $\log_3\left(\frac{1}{81}\right)$.
+3. Solve $\log_4(x+1)=3$.
+4. Solve $2^x=16$.
+5. Evaluate $\log_a(a^5)$, where $a>0$ and $a\neq1$.
+
+#### Gold
+
+1. Solve $\log_2(x-1)=3$.
+2. Solve $\log_3(2x+1)=2$.
+3. Solve $\log_5(x^2)=2$.
+4. Solve $\log_2(3x-4)=\log_2(x+6)$.
+5. If $\log_a81=4$, where $a>0$ and $a\neq1$, find $a$.
+
+## 2.3 The laws of logarithms
+
+### Key mathematical ideas
+
+For $a>0$, $a\neq1$, and positive $x$ and $y$,
+
+$$
+\log_a(xy)=\log_a x+\log_a y.
+$$
+
+This is the product rule.
+
+$$
+\log_a\left(\frac{x}{y}\right)=\log_a x-\log_a y.
+$$
+
+This is the division rule.
+
+$$
+\log_a(x^n)=n\log_a x.
+$$
+
+This is the power rule.
+
+A useful special case is
+
+$$
+\log_a\left(\frac{1}{x}\right)=-\log_a x.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-log-product-rule
+#| fig-cap: "Numerical check of the logarithm product rule."
+#| fig-width: 6
+#| fig-height: 4
+
+x_values <- seq(1, 20, length.out = 200)
+y_fixed <- 3
+
+df <- data.frame(
+  x = x_values
+)
+
+df$left_side <- log10(df$x * y_fixed)
+df$right_side <- log10(df$x) + log10(y_fixed)
+
+ggplot(df, aes(x = x)) +
+  geom_line(aes(y = left_side, linetype = "log10(3x)"), linewidth = 1.1) +
+  geom_line(aes(y = right_side, linetype = "log10(x) + log10(3)"), linewidth = 1.1) +
+  labs(
+    title = "Checking log10(3x) = log10(x) + log10(3)",
+    subtitle = "The two graphs overlap.",
+    x = "x",
+    y = "value",
+    linetype = "Expression"
+  ) +
+  book_theme()
+```
+
+The two graphs overlap because the two expressions are equivalent.
+
+### Worked example
+
+Simplify
+
+$$
+\log_a(3x^2)-\log_a(6x).
+$$
+
+Using the division rule,
+
+$$
+\log_a(3x^2)-\log_a(6x)
+=
+\log_a\left(\frac{3x^2}{6x}\right).
+$$
+
+So
+
+$$
+\log_a(3x^2)-\log_a(6x)
+=
+\log_a\left(\frac{x}{2}\right),
+$$
+
+where $x>0$.
+
+### Short investigation
+
+Use R to check the product, division and power rules numerically.
+
+```{r}
+x <- 8
+y <- 4
+a <- 2
+
+data.frame(
+  rule = c("product", "division", "power"),
+  left_side = c(
+    log(x * y, base = a),
+    log(x / y, base = a),
+    log(x^3, base = a)
+  ),
+  right_side = c(
+    log(x, base = a) + log(y, base = a),
+    log(x, base = a) - log(y, base = a),
+    3 * log(x, base = a)
+  )
+)
+```
+
+### Exercises 2.3
+
+#### Bronze
+
+1. Simplify $\log_a x+\log_a y$.
+2. Simplify $\log_a x-\log_a y$.
+3. Simplify $3\log_a x$.
+4. Simplify $\log_a\left(\frac{1}{x}\right)$.
+5. Evaluate $\log_a(a^7)$.
+
+#### Silver
+
+1. Evaluate $\log_2 8+\log_2 4$.
+2. Evaluate $\log_3 27-\log_3 3$.
+3. Evaluate $\log_5(25^2)$.
+4. If $\log_{10}2=p$, express $\log_{10}5$ in terms of $p$.
+5. Simplify $\log_a\left(\frac{x^2}{y^3}\right)$.
+
+#### Gold
+
+1. Solve $\log_2x+\log_2(x-2)=3$.
+2. Solve $\log_3(2x+1)-\log_3(x-1)=1$.
+3. Solve $2\log_{10}x=\log_{10}(3x+4)$.
+4. Solve $\log_a x+\log_a(x+6)=2\log_a5$, where $a>0$ and $a\neq1$.
+5. Simplify $\log_a\left(\frac{\sqrt{x}}{y^2}\right)$.
+
+## 2.4 Solving logarithmic equations
+
+### Key mathematical ideas
+
+When solving logarithmic equations, always check the domain.
+
+For example,
+
+$$
+\log_a(x-3)
+$$
+
+is defined only when
+
+$$
+x-3>0.
+$$
+
+So
+
+$$
+x>3.
+$$
+
+If
+
+$$
+\log_a A=\log_a B,
+$$
+
+then
+
+$$
+A=B,
+$$
+
+provided $A>0$ and $B>0$.
+
+### Worked example
+
+Solve
+
+$$
+\log_2(x+6)-\log_2x=2.
+$$
+
+First, the domain requires
+
+$$
+x>0.
+$$
+
+Using the division rule,
+
+$$
+\log_2\left(\frac{x+6}{x}\right)=2.
+$$
+
+Therefore,
+
+$$
+\frac{x+6}{x}=2^2.
+$$
+
+So
+
+$$
+\frac{x+6}{x}=4.
+$$
+
+Hence,
+
+$$
+x+6=4x.
+$$
+
+Therefore,
+
+$$
+3x=6,
+$$
+
+so
+
+$$
+x=2.
+$$
+
+Since $x=2>0$, the solution is valid.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-log-equation
+#| fig-cap: "Solving log2(x + 6) - log2(x) = 2 graphically."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(0.1, 10, length.out = 800)
+)
+
+df$y <- log(df$x + 6, base = 2) - log(df$x, base = 2)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 2, linetype = "dashed") +
+  geom_vline(xintercept = 2, linetype = "dashed") +
+  annotate("point", x = 2, y = 2, size = 3) +
+  labs(
+    title = "Graph of y = log2(x + 6) - log2(x)",
+    subtitle = "The equation is solved where y = 2.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Short investigation
+
+Change the value of $c$ in
+
+$$
+\log_2(x+c)-\log_2x=2.
+$$
+
+```{r}
+#| label: fig-log-equation-family
+#| fig-cap: "Exploring log2(x + c) - log2(x) = 2."
+#| fig-width: 6
+#| fig-height: 4
+
+c <- 6
+
+df <- data.frame(
+  x = seq(0.1, 20, length.out = 800)
+)
+
+df$y <- log(df$x + c, base = 2) - log(df$x, base = 2)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 2, linetype = "dashed") +
+  labs(
+    title = paste0("Graph of y = log2(x + ", c, ") - log2(x)"),
+    subtitle = "Change c and observe how the solution changes.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Exercises 2.4
+
+#### Bronze
+
+1. Solve $\log_2x=4$.
+2. Solve $\log_3(x-2)=2$.
+3. Solve $\log_{10}(2x)=1$.
+4. Solve $\log_5(x+1)=0$.
+5. Solve $\log_4(3x-1)=1$.
+
+#### Silver
+
+1. Solve $\log_2x+\log_24=5$.
+2. Solve $\log_3(x-1)=\log_35$.
+3. Solve $\log_{10}(x+2)=\log_{10}(3x-4)$.
+4. Solve $\log_5x+\log_5(x-4)=1$.
+5. Solve $2\log_2x=\log_2(3x+10)$.
+
+#### Gold
+
+1. Solve $\log_2(x+6)-\log_2x=2$.
+2. Solve $\log_3(2x-1)+\log_3(x+1)=2$.
+3. Solve $\log_{10}(x^2-5x+6)=0$.
+4. Solve $\log_2(x+1)=1+\log_2(x-2)$.
+5. Solve $\log_a x+\log_a(x-1)=\log_a6$, where $a>0$ and $a\neq1$.
+
+## 2.5 Solving exponential equations
+
+### Key mathematical ideas
+
+Exponential equations often have the unknown in an index.
+
+For example,
+
+$$
+2^x=7.
+$$
+
+Taking natural logarithms gives
+
+$$
+\ln(2^x)=\ln7.
+$$
+
+Using the power rule,
+
+$$
+x\ln2=\ln7.
+$$
+
+Therefore,
+
+$$
+x=\frac{\ln7}{\ln2}.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-exponential-equation
+#| fig-cap: "Solving 2^x = 7 graphically."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(-2, 5, length.out = 800)
+)
+
+df$y <- 2^df$x
+
+solution <- log(7) / log(2)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 7, linetype = "dashed") +
+  geom_vline(xintercept = solution, linetype = "dashed") +
+  annotate("point", x = solution, y = 7, size = 3) +
+  labs(
+    title = "Graph of y = 2^x",
+    subtitle = "The equation 2^x = 7 has one real solution.",
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Solve
+
+$$
+5^{x-2}=17.
+$$
+
+Taking natural logarithms,
+
+$$
+\ln(5^{x-2})=\ln17.
+$$
+
+Using the power rule,
+
+$$
+(x-2)\ln5=\ln17.
+$$
+
+Therefore,
+
+$$
+x-2=\frac{\ln17}{\ln5}.
+$$
+
+So
+
+$$
+x=2+\frac{\ln17}{\ln5}.
+$$
+
+### Short investigation
+
+Change the base $a$ and value $b$ in
+
+$$
+a^x=b.
+$$
+
+```{r}
+#| label: fig-exponential-family
+#| fig-cap: "Exploring a^x = b."
+#| fig-width: 6
+#| fig-height: 4
+
+a <- 3
+b <- 20
+
+df <- data.frame(
+  x = seq(-2, 5, length.out = 800)
+)
+
+df$y <- a^df$x
+solution <- log(b) / log(a)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = b, linetype = "dashed") +
+  geom_vline(xintercept = solution, linetype = "dashed") +
+  labs(
+    title = paste0("Graph of y = ", a, "^x"),
+    subtitle = paste0("Solution to ", a, "^x = ", b, " is x = ", round(solution, 3)),
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Exercises 2.5
+
+#### Bronze
+
+1. Solve $2^x=8$.
+2. Solve $3^x=\frac{1}{9}$.
+3. Solve $5^{x+1}=125$.
+4. Solve $10^{2x}=1000$.
+5. Solve $e^x=1$.
+
+#### Silver
+
+1. Solve $2^{x+1}=16$.
+2. Solve $3^{2x-1}=27$.
+3. Solve $4^x=8$.
+4. Solve $5^{x-2}=\frac{1}{25}$.
+5. Solve $e^{2x}=7$.
+
+#### Gold
+
+1. Solve $2^x=5$, giving your answer in exact logarithmic form.
+2. Solve $3^{x+1}=20$.
+3. Solve $e^{3x-2}=10$.
+4. Solve $4^x=2^{x+3}$.
+5. Solve $2^{2x}-5(2^x)+4=0$.
+
+## 2.6 Solving exponential inequalities
+
+### Key mathematical ideas
+
+For $a>1$, the function
+
+$$
+y=a^x
+$$
+
+is increasing.
+
+Therefore,
+
+$$
+a^x>a^k
+\quad \Longleftrightarrow \quad
+x>k.
+$$
+
+For $0<a<1$, the function
+
+$$
+y=a^x
+$$
+
+is decreasing.
+
+Therefore,
+
+$$
+a^x>a^k
+\quad \Longleftrightarrow \quad
+x<k.
+$$
+
+The direction of the inequality depends on whether the base is greater than $1$ or between $0$ and $1$.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-exponential-inequality
+#| fig-cap: "Comparing increasing and decreasing exponential functions."
+#| fig-width: 6
+#| fig-height: 4
+
+x_values <- seq(-4, 4, length.out = 800)
+
+df <- data.frame(
+  x = rep(x_values, 2),
+  function_name = rep(c("2^x", "(1/2)^x"), each = length(x_values))
+)
+
+df$y <- ifelse(df$function_name == "2^x", 2^df$x, (1/2)^df$x)
+
+ggplot(df, aes(x = x, y = y, linetype = function_name)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = 1) +
+  geom_vline(xintercept = 0) +
+  labs(
+    title = "Increasing and decreasing exponentials",
+    subtitle = "The base determines the direction of inequality reasoning.",
+    x = "x",
+    y = "y",
+    linetype = "Function"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Solve
+
+$$
+3^{2x-1}\geq 27.
+$$
+
+Since
+
+$$
+27=3^3,
+$$
+
+we have
+
+$$
+3^{2x-1}\geq3^3.
+$$
+
+The base $3$ is greater than $1$, so the inequality direction is unchanged:
+
+$$
+2x-1\geq3.
+$$
+
+Therefore,
+
+$$
+2x\geq4,
+$$
+
+so
+
+$$
+x\geq2.
+$$
+
+### Short investigation
+
+Change the base $a$ below. Try both $a>1$ and $0<a<1$.
+
+```{r}
+#| label: fig-exp-inequality-changing-base
+#| fig-cap: "Exploring exponential inequalities with different bases."
+#| fig-width: 6
+#| fig-height: 4
+
+a <- 2
+target <- 8
+
+df <- data.frame(
+  x = seq(-5, 5, length.out = 800)
+)
+
+df$y <- a^df$x
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(linewidth = 1.1) +
+  geom_hline(yintercept = target, linetype = "dashed") +
+  labs(
+    title = paste0("Graph of y = ", a, "^x"),
+    subtitle = paste0("Compare y with ", target),
+    x = "x",
+    y = "y"
+  ) +
+  book_theme()
+```
+
+### Exercises 2.6
+
+#### Bronze
+
+1. Solve $2^x>8$.
+2. Solve $3^x\leq\frac{1}{9}$.
+3. Solve $10^x<100$.
+4. Solve $e^x\geq1$.
+5. Solve $\left(\frac12\right)^x>8$.
+
+#### Silver
+
+1. Solve $2^{x+1}<16$.
+2. Solve $3^{2x-1}\geq27$.
+3. Solve $5^{x-2}>\frac{1}{25}$.
+4. Solve $e^{3x}<5$.
+5. Solve $\left(\frac13\right)^{x+2}\leq9$.
+
+#### Gold
+
+1. Solve $2^{2x}-5(2^x)+4\leq0$.
+2. Solve $3^{2x}-10(3^x)+9>0$.
+3. Solve $e^{2x}-4e^x+3<0$.
+4. Solve $4^x>2^{x+3}$.
+5. Solve $\left(\frac12\right)^{x-1}\geq4$.
+
+## 2.7 Natural logarithms
+
+### Key mathematical ideas
+
+The number $e$ is approximately
+
+$$
+e\approx2.718.
+$$
+
+The logarithm to base $e$ is called the natural logarithm.
+
+We write
+
+$$
+\ln x
+$$
+
+instead of
+
+$$
+\log_e x.
+$$
+
+The functions
+
+$$
+y=e^x
+$$
+
+and
+
+$$
+y=\ln x
+$$
+
+are inverse functions.
+
+This means:
+
+$$
+e^{\ln x}=x
+$$
+
+and
+
+$$
+\ln(e^x)=x.
+$$
+
+### Visualisation using R
+
+```{r}
+#| label: fig-exp-ln-inverse
+#| fig-cap: "The graphs of y = e^x and y = ln(x) are reflections in y = x."
+#| fig-width: 6
+#| fig-height: 4
+
+x_exp <- seq(-3, 3, length.out = 800)
+x_log <- seq(0.05, 20, length.out = 800)
+
+df_exp <- data.frame(
+  x = x_exp,
+  y = exp(x_exp),
+  function_name = "y = e^x"
+)
+
+df_log <- data.frame(
+  x = x_log,
+  y = log(x_log),
+  function_name = "y = ln(x)"
+)
+
+df_line <- data.frame(
+  x = seq(-3, 8, length.out = 300),
+  y = seq(-3, 8, length.out = 300),
+  function_name = "y = x"
+)
+
+df <- rbind(df_exp, df_log, df_line)
+
+ggplot(df, aes(x = x, y = y, linetype = function_name)) +
+  geom_line(linewidth = 1.1) +
+  coord_cartesian(xlim = c(-3, 8), ylim = c(-3, 8)) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  labs(
+    title = "The inverse relationship between e^x and ln(x)",
+    subtitle = "The graphs are reflections in the line y = x.",
+    x = "x",
+    y = "y",
+    linetype = "Function"
+  ) +
+  book_theme()
+```
+
+### Worked example
+
+Solve
+
+$$
+\ln(x+2)-\ln(x-1)=\ln2.
+$$
+
+First, the domain requires
+
+$$
+x+2>0
+$$
+
+and
+
+$$
+x-1>0.
+$$
+
+So
+
+$$
+x>1.
+$$
+
+Using the division rule,
+
+$$
+\ln\left(\frac{x+2}{x-1}\right)=\ln2.
+$$
+
+Therefore,
+
+$$
+\frac{x+2}{x-1}=2.
+$$
+
+So
+
+$$
+x+2=2x-2.
+$$
+
+Hence,
+
+$$
+x=4.
+$$
+
+This satisfies $x>1$, so the solution is valid.
+
+### Short investigation
+
+Use R to check that $e^x$ and $\ln x$ undo each other.
+
+```{r}
+values <- c(0.5, 1, 2, 5, 10)
+
+data.frame(
+  x = values,
+  exp_log_x = exp(log(values)),
+  log_exp_x = log(exp(values))
+)
+```
+
+### Exercises 2.7
+
+#### Bronze
+
+1. Evaluate $\ln e$.
+2. Evaluate $\ln1$.
+3. If $\ln x=2$, find $x$.
+4. Solve $e^x=5$.
+5. Evaluate $\ln(e^3)$.
+
+#### Silver
+
+1. Solve $\ln(e^{2x})=6$.
+2. Solve $\ln(x-1)=0$.
+3. Solve $\ln(2x+3)=\ln7$.
+4. Solve $e^{x+2}=10$.
+5. Simplify $\ln(x^2e^3)$, where $x>0$.
+
+#### Gold
+
+1. Solve $\ln x+\ln(x-1)=\ln6$.
+2. Solve $2\ln x=\ln(3x+10)$.
+3. Solve $\ln(x+2)-\ln(x-1)=\ln2$.
+4. Solve $e^x+e^{-x}=5$.
+5. Solve $\ln(x^2-4)=\ln(3x)$.
+
+## 2.8 Transforming relationships to linear form
+
+### Key mathematical ideas
+
+Logarithms can transform some curved relationships into straight-line relationships.
+
+If
+
+$$
+y=kx^n,
+$$
+
+then taking natural logarithms gives
+
+$$
+\ln y=\ln(kx^n).
+$$
+
+So
+
+$$
+\ln y=\ln k+n\ln x.
+$$
+
+This has the form
+
+$$
+Y=mX+c,
+$$
+
+where
+
+$$
+Y=\ln y,
+\quad
+X=\ln x,
+\quad
+m=n,
+\quad
+c=\ln k.
+$$
+
+If
+
+$$
+y=ka^x,
+$$
+
+then
+
+$$
+\ln y=\ln(ka^x).
+$$
+
+So
+
+$$
+\ln y=\ln k+x\ln a.
+$$
+
+This is linear in $x$.
+
+### Visualisation using R
+
+```{r}
+#| label: fig-linearisation-power-law
+#| fig-cap: "Linearising y = 3x^2 using logarithms."
+#| fig-width: 6
+#| fig-height: 4
+
+df <- data.frame(
+  x = seq(1, 20, length.out = 200)
+)
+
+df$y <- 3 * df$x^2
+df$log_x <- log(df$x)
+df$log_y <- log(df$y)
+
+ggplot(df, aes(x = log_x, y = log_y)) +
+  geom_line(linewidth = 1.1) +
+  labs(
+    title = "Linear form of y = 3x^2",
+    subtitle = "Plotting ln(y) against ln(x) gives a straight line.",
+    x = "ln(x)",
+    y = "ln(y)"
+  ) +
+  book_theme()
+```
+
+For
+
+$$
+y=3x^2,
+$$
+
+we have
+
+$$
+\ln y=2\ln x+\ln3.
+$$
+
+So the gradient of the line is $2$, and the intercept is $\ln3$.
+
+### Worked example
+
+The variables $x$ and $y$ satisfy
+
+$$
+y=kx^n.
+$$
+
+The graph of $\ln y$ against $\ln x$ is a straight line passing through $(0,1)$ and $(2,5)$.
+
+Find $k$ and $n$.
+
+Since
+
+$$
+\ln y=n\ln x+\ln k,
+$$
+
+the gradient is $n$.
+
+Therefore,
+
+$$
+n=\frac{5-1}{2-0}=2.
+$$
+
+The intercept is $1$, so
+
+$$
+\ln k=1.
+$$
+
+Hence,
+
+$$
+k=e.
+$$
+
+Therefore,
+
+$$
+y=ex^2.
+$$
+
+### Short investigation
+
+The code below creates data from a power law, then plots the linearised relationship.
+
+```{r}
+#| label: fig-linearisation-investigation
+#| fig-cap: "A power law becomes linear on a log-log graph."
+#| fig-width: 6
+#| fig-height: 4
+
+k <- 4
+n <- 1.5
+
+df <- data.frame(
+  x = seq(1, 50, length.out = 100)
+)
+
+df$y <- k * df$x^n
+df$ln_x <- log(df$x)
+df$ln_y <- log(df$y)
+
+ggplot(df, aes(x = ln_x, y = ln_y)) +
+  geom_point(size = 1.5) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1.1) +
+  labs(
+    title = "Linearising y = kx^n",
+    subtitle = "The gradient estimates n and the intercept estimates ln(k).",
+    x = "ln(x)",
+    y = "ln(y)"
+  ) +
+  book_theme()
+```
+
+### Exercises 2.8
+
+#### Bronze
+
+1. Rewrite $y=4x^3$ in linear form using natural logarithms.
+2. Rewrite $y=7e^{2x}$ in linear form using natural logarithms.
+3. Rewrite $y=5(3^x)$ in linear form using natural logarithms.
+4. If $\ln y=2\ln x+\ln6$, express $y$ in the form $kx^n$.
+5. If $\ln y=-0.4x+\ln10$, express $y$ in exponential form.
+
+#### Silver
+
+1. For $y=kx^n$, a graph of $\ln y$ against $\ln x$ passes through $(0,1)$ and $(2,5)$. Find $k$ and $n$.
+2. For $y=ka^x$, a graph of $\ln y$ against $x$ passes through $(0,3)$ and $(4,5)$. Find $k$ and $a$.
+3. A graph of $\log_{10}y$ against $\log_{10}x$ has gradient $-2$ and intercept $1$. Express $y$ in terms of $x$.
+4. A graph of $\ln y$ against $x$ has gradient $\ln2$ and intercept $\ln3$. Express $y$ in terms of $x$.
+5. If $\ln y=-3\ln x+\ln4$, express $y$ in terms of $x$.
+
+#### Gold
+
+1. The variables $x$ and $y$ satisfy $y=kx^n$. Given that $(x,y)=(2,12)$ and $(8,96)$, find $k$ and $n$.
+2. The variables $x$ and $y$ satisfy $y=ka^x$. Given that $(x,y)=(1,6)$ and $(3,24)$, find $k$ and $a$.
+3. The graph of $\ln y$ against $x$ is a straight line through $(1,2.2)$ and $(5,3.0)$. Given that $y=ka^x$, find $k$ and $a$.
+4. The graph of $\ln y$ against $\ln x$ is a straight line through $(1,5)$ and $(3,-1)$. Given that $y=kx^n$, find $k$ and $n$.
+5. The relationship $y=Ae^{-bx^2}$ gives a straight line when $\ln y$ is plotted against $x^2$. The line passes through $(0,2)$ and $(4,0)$, where the horizontal coordinate is $x^2$. Find $A$ and $b$.
+
+## STEP-style extension questions
+
+These questions are designed to require more than routine application.
+
+### STEP-style Question 1
+
+Solve
+
+$$
+\log_2x+\log_4x=6.
+$$
+
+### STEP-style Question 2
+
+Solve
+
+$$
+2^x+2^{-x}=5.
+$$
+
+### STEP-style Question 3
+
+Let
+
+$$
+y=kx^n
+$$
+
+where $k>0$ and $x>0$. The graph of $\ln y$ against $\ln x$ is a straight line. Prove that its gradient is $n$.
+
+### STEP-style Question 4
+
+Let $a$, $b$, and $c$ be positive real numbers not equal to $1$. Show that
+
+$$
+\log_a b \cdot \log_b c \cdot \log_c a=1.
+$$
+
+### STEP-style Question 5
+
+Solve
+
+$$
+\ln x+\ln(4-x)=\ln3.
+$$
+
+Be careful about the domain.
+
+## Reflection questions
+
+1. What does a logarithm actually measure?
+2. Why must the argument of a logarithm be positive?
+3. Why does the equation $\log_aA=\log_aB$ imply $A=B$?
+4. Why can logarithms help us solve exponential equations?
+5. When solving an exponential inequality, why does the base matter?
+6. How are $e^x$ and $\ln x$ related geometrically?
+7. Why does plotting $\ln y$ against $\ln x$ help with relationships of the form $y=kx^n$?
+8. What can R show clearly that algebra alone may hide?
+
+## Answers
+
+### Answers to Exercises 2.1
+
+#### Bronze
+
+1. $2$.
+2. $5$.
+3. $-2$.
+4. $\log_{10}10000=4$.
+5. $x=1000$.
+
+#### Silver
+
+1. $\frac12$.
+2. $-3$.
+3. $x=\frac32$.
+4. $x=20$.
+5. $x=13$.
+
+#### Gold
+
+1. $x=2$.
+2. $x=33$.
+3. $x=\frac32$.
+4. $x=6$.
+5. $x=\pm10$.
+
+### Answers to Exercises 2.2
+
+#### Bronze
+
+1. $3$.
+2. $0$.
+3. $1$.
+4. $-2$.
+5. $x=49$.
+
+#### Silver
+
+1. $x=32$.
+2. $-4$.
+3. $x=63$.
+4. $x=4$.
+5. $5$.
+
+#### Gold
+
+1. $x=9$.
+2. $x=4$.
+3. $x=\pm5$.
+4. $x=5$.
+5. $a=3$.
+
+### Answers to Exercises 2.3
+
+#### Bronze
+
+1. $\log_a(xy)$.
+2. $\log_a\left(\frac{x}{y}\right)$.
+3. $\log_a(x^3)$.
+4. $-\log_a x$.
+5. $7$.
+
+#### Silver
+
+1. $5$.
+2. $2$.
+3. $4$.
+4. $1-p$.
+5. $2\log_a x-3\log_a y$.
+
+#### Gold
+
+1. $x=4$.
+2. $x=4$.
+3. $x=4$.
+4. $x=-3+\sqrt{34}$.
+5. $\frac12\log_a x-2\log_a y$.
+
+### Answers to Exercises 2.4
+
+#### Bronze
+
+1. $x=16$.
+2. $x=11$.
+3. $x=5$.
+4. $x=0$.
+5. $x=\frac53$.
+
+#### Silver
+
+1. $x=8$.
+2. $x=6$.
+3. $x=3$.
+4. $x=5$.
+5. $x=5$.
+
+#### Gold
+
+1. $x=2$.
+2. $x=2$.
+3. $x=\frac{5-\sqrt5}{2}$ or $x=\frac{5+\sqrt5}{2}$.
+4. $x=5$.
+5. $x=3$.
+
+### Answers to Exercises 2.5
+
+#### Bronze
+
+1. $x=3$.
+2. $x=-2$.
+3. $x=2$.
+4. $x=\frac32$.
+5. $x=0$.
+
+#### Silver
+
+1. $x=3$.
+2. $x=2$.
+3. $x=\frac32$.
+4. $x=0$.
+5. $x=\frac12\ln7$.
+
+#### Gold
+
+1. $x=\frac{\ln5}{\ln2}$.
+2. $x=\frac{\ln20}{\ln3}-1$.
+3. $x=\frac{\ln10+2}{3}$.
+4. $x=3$.
+5. $x=0$ or $x=2$.
+
+### Answers to Exercises 2.6
+
+#### Bronze
+
+1. $x>3$.
+2. $x\leq -2$.
+3. $x<2$.
+4. $x\geq0$.
+5. $x<-3$.
+
+#### Silver
+
+1. $x<3$.
+2. $x\geq2$.
+3. $x>0$.
+4. $x<\frac{\ln5}{3}$.
+5. $x\geq-4$.
+
+#### Gold
+
+1. $0\leq x\leq2$.
+2. $x<0$ or $x>2$.
+3. $0<x<\ln3$.
+4. $x>3$.
+5. $x\leq-1$.
+
+### Answers to Exercises 2.7
+
+#### Bronze
+
+1. $1$.
+2. $0$.
+3. $x=e^2$.
+4. $x=\ln5$.
+5. $3$.
+
+#### Silver
+
+1. $x=3$.
+2. $x=2$.
+3. $x=2$.
+4. $x=\ln10-2$.
+5. $2\ln x+3$.
+
+#### Gold
+
+1. $x=3$.
+2. $x=5$.
+3. $x=4$.
+4. $x=\ln\left(\frac{5+\sqrt{21}}{2}\right)$ or $x=\ln\left(\frac{5-\sqrt{21}}{2}\right)$.
+5. $x=4$.
+
+### Answers to Exercises 2.8
+
+#### Bronze
+
+1. $\ln y=3\ln x+\ln4$.
+2. $\ln y=2x+\ln7$.
+3. $\ln y=x\ln3+\ln5$.
+4. $y=6x^2$.
+5. $y=10e^{-0.4x}$.
+
+#### Silver
+
+1. $n=2$, $k=e$.
+2. $k=e^3$, $a=e^{1/2}$.
+3. $y=10x^{-2}$.
+4. $y=3(2^x)$.
+5. $y=4x^{-3}$.
+
+#### Gold
+
+1. $n=\frac32$, $k=3\sqrt2$.
+2. $a=2$, $k=3$.
+3. $a=e^{0.2}$, $k=e^2$.
+4. $n=-3$, $k=e^8$.
+5. $A=e^2$, $b=\frac12$.
+
+### Answers to STEP-style extension questions
+
+1. Since $\log_4x=\frac12\log_2x$, we get $\frac32\log_2x=6$, so $\log_2x=4$. Hence $x=16$.
+2. Let $u=2^x$. Then $u+\frac1u=5$, so $u^2-5u+1=0$. Hence $u=\frac{5+\sqrt{21}}{2}$ or $u=\frac{5-\sqrt{21}}{2}$. Therefore, $x=\log_2\left(\frac{5+\sqrt{21}}{2}\right)$ or $x=\log_2\left(\frac{5-\sqrt{21}}{2}\right)$.
+3. Taking natural logarithms gives $\ln y=\ln k+n\ln x$. This is a straight line with vertical variable $\ln y$, horizontal variable $\ln x$, and gradient $n$.
+4. Writing each logarithm using natural logarithms gives
+   $$
+   \frac{\ln b}{\ln a}\cdot\frac{\ln c}{\ln b}\cdot\frac{\ln a}{\ln c}=1.
+   $$
+5. The domain is $0<x<4$. Combining logarithms gives $\ln(x(4-x))=\ln3$, so $x(4-x)=3$. Hence $x^2-4x+3=0$, giving $x=1$ or $x=3$.

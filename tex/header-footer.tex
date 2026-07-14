@@ -1,0 +1,53 @@
+\usepackage{scrlayer-scrpage}
+
+\clearpairofpagestyles
+
+% Header
+\ihead{Mr Viet Hoang}
+\chead{Department of Mathematics and Computer Science}
+\ohead{Sedbergh Vietnam}
+
+% Footer
+\ifoot{A Level Pure Mathematics 2 \& 3 with R}
+\cfoot{}
+\ofoot{\pagemark}
+
+% Lines
+\KOMAoptions{
+  headsepline=true,
+  footsepline=true
+}
+
+% Slightly smaller header/footer text
+\setkomafont{pageheadfoot}{\small}
+\setkomafont{pagenumber}{\small}
+
+\makeatletter
+\renewcommand{\maketitle}{
+\begin{titlepage}
+\centering
+
+\vspace*{3cm}
+
+{\Huge\bfseries \@title \par}
+
+\vspace{0.8cm}
+
+{\Large \@subtitle \par}
+
+\vspace{2cm}
+
+{\Large\bfseries Mr Viet Hoang \par}
+
+\vspace{0.3cm}
+
+{\large Head of Mathematics and Computer Science \par}
+{\large Sedbergh Vietnam \par}
+
+\vfill
+
+{\large \today \par}
+
+\end{titlepage}
+}
+\makeatother

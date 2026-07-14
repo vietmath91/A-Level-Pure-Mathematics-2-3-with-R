@@ -1,0 +1,45 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  title: "A Level Pure Mathematics 2 & 3 with R"
+  subtitle: "Illustrative Notes, Graphs, Simulations and Worked Examples"
+  author: "Mr Viet Hoang"
+  chapters:
+    - index.qmd
+    - chapters/01-algebra.qmd
+    - chapters/02-log-exp.qmd
+    - chapters/03-trigonometry.qmd
+    - chapters/04-differentiation.qmd
+    - chapters/05-integration.qmd
+    - chapters/06-numerical-methods.qmd
+    - chapters/07-further-algebra.qmd
+    - chapters/08-further-calculus.qmd
+    - chapters/09-vectors.qmd
+    - chapters/10-differential-equations.qmd
+    - chapters/11-complex-numbers.qmd
+
+format:
+  html:
+    theme:
+      - cosmo
+      - styles/custom.scss
+    toc: true
+    number-sections: true
+    code-fold: true
+    code-tools: true
+    html-math-method: mathjax
+
+  pdf:
+    documentclass: scrreprt
+    number-sections: true
+    include-in-header:
+      - tex/header-footer.tex
+      - tex/math-macros.tex
+
+execute:
+  warning: false
+  message: false
+  echo: true
+  freeze: auto
